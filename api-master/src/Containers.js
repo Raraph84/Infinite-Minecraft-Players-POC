@@ -236,7 +236,7 @@ class Server extends Container {
      */
     constructor(servers, name, port, maxPlayers) {
 
-        super(servers, name, path.join(config.serversDir, name), port);
+        super(servers, name, path.join(path.resolve(config.serversDir), name), port);
 
         this.maxPlayers = maxPlayers;
     }
@@ -276,7 +276,7 @@ class Lobby extends Server {
 
     /**
      * @param {import("./Servers")} servers 
-     * @param {string} id 
+     * @param {number} id 
      */
     constructor(servers, id) {
 

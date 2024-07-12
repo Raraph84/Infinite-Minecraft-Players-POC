@@ -56,24 +56,11 @@ public class Servers {
         private final String name;
         private final int port;
         private final int maxPlayers;
-        private ServerState state;
-        private boolean gatewayConnected;
 
         public Server(JsonObject server) {
-
-            if (!server.has("name") || !server.getAsJsonPrimitive("name").isString()
-                    || !server.has("port") || !server.getAsJsonPrimitive("port").isNumber()
-                    || !server.has("maxPlayers") || !server.getAsJsonPrimitive("maxPlayers").isNumber()
-                    || !server.has("state") || !server.getAsJsonPrimitive("state").isString()
-                    || !server.has("gatewayConnected") || !server.getAsJsonPrimitive("gatewayConnected").isBoolean()) {
-                throw new RuntimeException("API Error");
-            }
-
             this.name = server.getAsJsonPrimitive("name").getAsString();
             this.port = server.getAsJsonPrimitive("port").getAsInt();
             this.maxPlayers = server.getAsJsonPrimitive("maxPlayers").getAsInt();
-            this.state = Servers.ServerState.valueOf(server.getAsJsonPrimitive("state").getAsString().toUpperCase());
-            this.gatewayConnected = server.getAsJsonPrimitive("gatewayConnected").getAsBoolean();
         }
 
         public String getName() {
@@ -87,25 +74,5 @@ public class Servers {
         public int getMaxPlayers() {
             return maxPlayers;
         }
-
-        public ServerState getState() {
-            return state;
-        }
-
-        public void setState(ServerState state) {
-            this.state = state;
-        }
-
-        public boolean isGatewayConnected() {
-            return gatewayConnected;
-        }
-
-        public void setGatewayConnected(boolean gatewayConnected) {
-            this.gatewayConnected = gatewayConnected;
-        }
-    }
-
-    public enum ServerState {
-        STOPPED, STARTING, STARTED, STOPPING
     }
 }
