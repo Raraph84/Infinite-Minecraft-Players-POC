@@ -4,7 +4,7 @@
     "proxyMemory": 4,
     "proxyPort": 25566,
     "serversDir": "../servers",
-    "lobbyServerTemplateDir": "../lobby-template",
+    "lobbyServerTemplateDir": "../server-template",
     "lobbyServerMemory": 2,
     "lobbyPlayers": 10,
     "lobbyMaxPlayers": 20,
