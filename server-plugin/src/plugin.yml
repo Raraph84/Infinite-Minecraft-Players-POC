@@ -1,0 +1,4 @@
+name: Infinite-Minecraft-Players-POC-Server-Plugin
+main: fr.raraph84.infinite_minecraft_players_poc.server_plugin.MinecraftInfinitePlayersPOCServerPlugin
+version: 1.0
+author: Raraph84

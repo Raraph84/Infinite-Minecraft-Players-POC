@@ -1,0 +1,3 @@
+servername: SERVERNAME
+apikey: exampleapikey
+apihost: http://172.17.0.1:8080

@@ -1,0 +1,12 @@
+{
+    "port": 8080,
+    "proxyDir": "../proxy",
+    "proxyMemory": 4,
+    "proxyPort": 25566,
+    "serversDir": "../servers",
+    "lobbyServerTemplateDir": "../lobby-template",
+    "lobbyServerMemory": 2,
+    "lobbyPlayers": 10,
+    "lobbyMaxPlayers": 20,
+    "maxRam": 20
+}

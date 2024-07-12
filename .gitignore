@@ -1,0 +1,4 @@
+intellij/
+*.iml
+proxy/plugins/Infinite-Minecraft-Players-POC-Proxy-Plugin/config.yml
+lobby-template/plugins/Infinite-Minecraft-Players-POC-Server-Plugin/config.yml
