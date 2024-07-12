@@ -1,0 +1,11 @@
+{
+  "name": "infinite-minecraft-players-poc-bots",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "author": "Raraph84",
+  "license": "ISC",
+  "dependencies": {
+    "mineflayer": "^4.20.1"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "name": "infinite-minecraft-players-poc-api-master",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "author": "Raraph84",
+  "license": "ISC",
+  "dependencies": {
+    "dockerode": "^4.0.2",
+    "dotenv": "^16.4.5",
+    "raraph84-lib": "^2.19.0"
+  }
+}
