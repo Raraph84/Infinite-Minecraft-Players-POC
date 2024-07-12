@@ -5,11 +5,15 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import fr.raraph84.infinite_minecraft_players_poc.proxy_plugin.Config;
 import fr.raraph84.infinite_minecraft_players_poc.proxy_plugin.MinecraftInfinitePlayersPOCProxyPlugin;
+import net.md_5.bungee.api.ProxyServer;
+import net.md_5.bungee.api.config.ServerInfo;
+import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.scheduler.ScheduledTask;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
 
 import java.net.URI;
+import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -112,25 +116,23 @@ public class Gateway {
                     Servers.onServerAdded(new Servers.Server(message));
                     break;
 
-                case "SERVER_REMOVED":
-                case "SERVER_STATE":
-                case "SERVER_GATEWAY_CONNECTED":
-                case "SERVER_GATEWAY_DISCONNECTED":
-                    Servers.Server server = Servers.getServer(message.get("name").getAsString());
-                    switch (event) {
-                        case "SERVER_REMOVED":
-                            Servers.onServerRemoved(server);
-                            break;
-                        case "SERVER_STATE":
-                            server.setState(Servers.ServerState.valueOf(message.get("state").getAsString().toUpperCase()));
-                            break;
-                        case "SERVER_GATEWAY_CONNECTED":
-                            server.setGatewayConnected(true);
-                            break;
-                        case "SERVER_GATEWAY_DISCONNECTED":
-                            server.setGatewayConnected(false);
-                            break;
-                    }
+                case "SERVER_REMOVED": {
+                    Servers.onServerRemoved(Servers.getServer(message.get("name").getAsString()));
+                    break;
+                }
+
+                case "CONNECT_PLAYER": {
+
+                    UUID playerUuid = UUID.fromString(message.get("playerUuid").getAsString());
+                    String serverName = message.get("serverName").getAsString();
+
+                    ProxyServer proxy = MinecraftInfinitePlayersPOCProxyPlugin.getInstance().getProxy();
+                    ProxiedPlayer player = proxy.getPlayer(playerUuid);
+                    ServerInfo server = proxy.getServerInfo(serverName);
+
+                    player.connect(server);
+                    break;
+                }
             }
         }
 

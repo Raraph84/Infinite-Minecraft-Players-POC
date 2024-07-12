@@ -28,40 +28,15 @@ public class API {
             throw new RuntimeException(error);
         }
 
-        if (req.getJsonResponse() == null || !req.getJsonResponse().isJsonObject()) {
-            MinecraftInfinitePlayersPOCProxyPlugin.getInstance().getLogger().severe("API Error - " + req.getUrl() + " - " + req.getResponseCode());
-            throw new RuntimeException("API Error");
-        }
+        JsonObject res = parseJsonResponse(req);
 
-        JsonObject res = req.getJsonResponse().getAsJsonObject();
+        if (req.getResponseCodeType() != HttpRequest.ResponseCodeType.SUCCESS)
+            throw parseErrorMessage(req, res);
 
-        if (req.getResponseCodeType() == HttpRequest.ResponseCodeType.SUCCESS) {
+        for (JsonElement server : res.get("servers").getAsJsonArray())
+            servers.add(new Servers.Server(server.getAsJsonObject()));
 
-            if (!res.has("servers") || !res.get("servers").isJsonArray()) {
-                MinecraftInfinitePlayersPOCProxyPlugin.getInstance().getLogger().severe("API Error - " + req.getUrl() + " - " + req.getResponseCode());
-                throw new RuntimeException("API Error");
-            }
-
-            for (JsonElement serverElement : res.get("servers").getAsJsonArray()) {
-
-                if (serverElement == null || !serverElement.isJsonObject()) {
-                    MinecraftInfinitePlayersPOCProxyPlugin.getInstance().getLogger().severe("API Error - " + req.getUrl() + " - " + req.getResponseCode());
-                    throw new RuntimeException("API Error");
-                }
-
-                servers.add(new Servers.Server(serverElement.getAsJsonObject()));
-            }
-
-            return servers;
-        }
-
-        if (!res.has("message") || !res.get("message").isJsonPrimitive() || !res.get("message").getAsJsonPrimitive().isString()) {
-            MinecraftInfinitePlayersPOCProxyPlugin.getInstance().getLogger().severe("API Error - " + req.getUrl() + " - " + req.getResponseCode());
-            throw new RuntimeException("API Error");
-        }
-
-        MinecraftInfinitePlayersPOCProxyPlugin.getInstance().getLogger().severe("API Error - " + req.getUrl() + " - " + req.getResponseCode() + " " + res.get("message").getAsString());
-        throw new RuntimeException("API Error");
+        return servers;
     }
 
     public static String proxyPlayerJoin(UUID uuid, String username) {
@@ -81,33 +56,12 @@ public class API {
             throw new RuntimeException(error);
         }
 
-        if (req.getJsonResponse() == null || !req.getJsonResponse().isJsonObject()) {
-            MinecraftInfinitePlayersPOCProxyPlugin.getInstance().getLogger().severe("API Error - " + req.getUrl() + " - " + req.getResponseCode());
-            throw new RuntimeException("API Error");
-        }
+        JsonObject res = parseJsonResponse(req);
 
-        JsonObject res = req.getJsonResponse().getAsJsonObject();
+        if (req.getResponseCodeType() != HttpRequest.ResponseCodeType.SUCCESS)
+            throw parseErrorMessage(req, res, "No server available");
 
-        if (req.getResponseCodeType() == HttpRequest.ResponseCodeType.SUCCESS) {
-
-            if (!res.has("server") || !res.get("server").isJsonPrimitive() || !res.get("server").getAsJsonPrimitive().isString()) {
-                MinecraftInfinitePlayersPOCProxyPlugin.getInstance().getLogger().severe("API Error - " + req.getUrl() + " - " + req.getResponseCode());
-                throw new RuntimeException("API Error");
-            }
-
-            return res.get("server").getAsString();
-        }
-
-        if (!res.has("message") || !res.get("message").isJsonPrimitive() || !res.get("message").getAsJsonPrimitive().isString()) {
-            MinecraftInfinitePlayersPOCProxyPlugin.getInstance().getLogger().severe("API Error - " + req.getUrl() + " - " + req.getResponseCode());
-            throw new RuntimeException("API Error");
-        }
-
-        if (res.get("message").getAsString().equals("No server available"))
-            throw new RuntimeException("No server available");
-
-        MinecraftInfinitePlayersPOCProxyPlugin.getInstance().getLogger().severe("API Error - " + req.getUrl() + " - " + req.getResponseCode() + " " + res.get("message").getAsString());
-        throw new RuntimeException("API Error");
+        return res.get("server").getAsString();
     }
 
     public static void proxyPlayerQuit(UUID uuid) {
@@ -122,29 +76,36 @@ public class API {
             throw new RuntimeException(error);
         }
 
-        if (req.getResponseCodeType() == HttpRequest.ResponseCodeType.SUCCESS)
-            return;
+        if (req.getResponseCodeType() != HttpRequest.ResponseCodeType.SUCCESS)
+            throw parseErrorMessage(req, parseJsonResponse(req), "This player is not on the proxy");
+    }
+
+    public static String getGatewayUrl() {
+        return API_HOST.replace("http", "ws") + "/gateway";
+    }
+
+    private static JsonObject parseJsonResponse(HttpRequest req) {
 
         if (req.getJsonResponse() == null || !req.getJsonResponse().isJsonObject()) {
             MinecraftInfinitePlayersPOCProxyPlugin.getInstance().getLogger().severe("API Error - " + req.getUrl() + " - " + req.getResponseCode());
             throw new RuntimeException("API Error");
         }
 
-        JsonObject res = req.getJsonResponse().getAsJsonObject();
+        return req.getJsonResponse().getAsJsonObject();
+    }
+
+    private static RuntimeException parseErrorMessage(HttpRequest req, JsonObject res, String... errors) {
 
         if (!res.has("message") || !res.get("message").isJsonPrimitive() || !res.get("message").getAsJsonPrimitive().isString()) {
             MinecraftInfinitePlayersPOCProxyPlugin.getInstance().getLogger().severe("API Error - " + req.getUrl() + " - " + req.getResponseCode());
-            throw new RuntimeException("API Error");
+            return new RuntimeException("API Error");
         }
 
-        if (res.get("message").getAsString().equals("This player is not on the proxy"))
-            throw new RuntimeException("This player is not on the proxy");
+        for (String error : errors)
+            if (res.get("message").getAsString().equals(error))
+                throw new RuntimeException(error);
 
         MinecraftInfinitePlayersPOCProxyPlugin.getInstance().getLogger().severe("API Error - " + req.getUrl() + " - " + req.getResponseCode() + " " + res.get("message").getAsString());
-        throw new RuntimeException("API Error");
-    }
-
-    public static String getGatewayUrl() {
-        return API_HOST.replace("http", "ws") + "/gateway";
+        return new RuntimeException("API Error");
     }
 }

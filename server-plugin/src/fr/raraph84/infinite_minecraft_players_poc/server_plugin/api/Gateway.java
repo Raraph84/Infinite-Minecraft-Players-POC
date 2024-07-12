@@ -98,6 +98,7 @@ public class Gateway {
             String event = message.get("event").getAsString();
 
             switch (event) {
+
                 case "LOGGED":
                     state = State.CONNECTED;
                     latch.countDown();
