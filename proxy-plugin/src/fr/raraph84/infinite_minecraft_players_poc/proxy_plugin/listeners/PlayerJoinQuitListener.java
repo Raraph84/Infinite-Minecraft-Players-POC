@@ -20,8 +20,9 @@ public class PlayerJoinQuitListener implements Listener {
             if (exception.getMessage().equals("No server available")) {
                 event.getPlayer().disconnect(new TextComponent("§cThere is no server available at the moment, please try again later."));
                 return;
-            } else
-                throw exception;
+            }
+            event.getPlayer().disconnect(new TextComponent("§cAn error occurred, please try again later."));
+            throw exception;
         }
 
         event.setTarget(MinecraftInfinitePlayersPOCProxyPlugin.getInstance().getProxy().getServerInfo(server));

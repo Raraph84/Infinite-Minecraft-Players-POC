@@ -99,6 +99,8 @@ class Servers {
 
         console.log("Starting servers...");
 
+        if (config.proxyMemory + config.lobbyServerMemory + config.gameServerMemory > config.maxMemory) throw new Error("Base memory usage is higher than max memory");
+
         this.proxy.start();
         this.startLobbyServer();
         this.startGameServer();
@@ -111,7 +113,11 @@ class Servers {
 
             const servers = this.servers.filter((server) => server instanceof Lobby);
             const totalPlayerCount = servers.reduce((acc, server) => acc + server.players.length, 0);
-            const requiredServerCount = Math.max(1, Math.ceil(totalPlayerCount * 1.1 / config.lobbyPlayers));  // 10% more servers than required and minimum 1
+            let requiredServerCount = Math.max(1, Math.ceil(totalPlayerCount * 1.1 / config.lobbyPlayers));  // 10% more servers than required and minimum 1
+
+            // Decrement requiredServerCount while ram usage is more than configured max memory
+            const otherMemory = config.proxyMemory + this.servers.reduce((acc, server) => acc + (server instanceof Game ? config.gameServerMemory : 0), 0);
+            while (otherMemory + requiredServerCount * config.lobbyServerMemory > config.maxMemory) requiredServerCount--;
 
             if (servers.length < requiredServerCount)
                 console.log("Scaling up lobby servers...", totalPlayerCount, servers.length, requiredServerCount);
@@ -147,6 +153,10 @@ class Servers {
             // Increment server count while there is not 20% of requiredServerCount not started
             let notStartedServerCount = servers.filter((server) => !server.started).length + (requiredServerCount - servers.length);
             if (notStartedServerCount / requiredServerCount < 0.2) { requiredServerCount++; notStartedServerCount++; }
+
+            // Decrement requiredServerCount while ram usage is more than configured max memory
+            const otherMemory = config.proxyMemory + this.servers.reduce((acc, server) => acc + (server instanceof Lobby ? config.lobbyServerMemory : 0), 0);
+            while (otherMemory + requiredServerCount * config.gameServerMemory > config.maxMemory) requiredServerCount--;
 
             if (servers.length < requiredServerCount)
                 console.log("Scaling up game servers...", totalPlayerCount, servers.length, requiredServerCount);
