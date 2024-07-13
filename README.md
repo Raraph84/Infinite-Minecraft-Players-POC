@@ -34,7 +34,7 @@ For example, if I want 100 bots with 1 second delay between each join, I can run
 ## Compiling jars
 
 ### BungeeCord
-You can build BungeeCord on [its repository](https://github.com/SpigotMC/BungeeCord/)  
+You can build BungeeCord on [its repository](https://github.com/SpigotMC/BungeeCord)  
 Or download it on [its ci](https://ci.md-5.net/job/BungeeCord/)  
 And replace it in `proxy/` and `proxy-plugin/libs/`
 
@@ -65,6 +65,19 @@ You can import `server-plugin/` into an IDE like IntelliJ and import the libs in
 - Java websocket, SLF4J API and Simple as compile
 
 Then build the jar and replace it in `server-template/plugins/`
+
+### Spark
+Spark is not required but useful for debugging lag on the proxy or the Spigots
+You can build Spark on [its repository](https://github.com/lucko/spark)  
+Or download it on [its website](https://spark.lucko.me/download)  
+And replace it in `proxy/plugins/` and `server-template/plugins/`
+
+### WorldEdit
+WorldEdit is not required but useful to have on every server
+You can build WeoldEdit on [its repository](https://github.com/EngineHub/WorldEdit)  
+Or download it on [its CurseForge Bukkit page](https://dev.bukkit.org/projects/worldedit/files)  
+And replace it in `server-template/plugins/`
+
 
 ## TODO
 
