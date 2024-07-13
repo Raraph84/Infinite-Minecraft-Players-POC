@@ -99,7 +99,7 @@ class Servers {
 
         console.log("Starting servers...");
 
-        if (config.proxyMemory + config.lobbyServerMemory + config.gameServerMemory > config.maxMemory) throw new Error("Base memory usage is higher than max memory");
+        if (config.proxyMemory + config.lobbyServerMemory + config.gameServerMemory > config.maxMemory && config.maxMemory > 0) throw new Error("Base memory usage is higher than max memory");
 
         this.proxy.start();
         this.startLobbyServer();
@@ -117,7 +117,7 @@ class Servers {
 
             // Decrement requiredServerCount while ram usage is more than configured max memory
             const otherMemory = config.proxyMemory + this.servers.reduce((acc, server) => acc + (server instanceof Game ? config.gameServerMemory : 0), 0);
-            while (otherMemory + requiredServerCount * config.lobbyServerMemory > config.maxMemory) requiredServerCount--;
+            while (otherMemory + requiredServerCount * config.lobbyServerMemory > config.maxMemory && config.maxMemory > 0) requiredServerCount--;
 
             if (servers.length < requiredServerCount)
                 console.log("Scaling up lobby servers...", totalPlayerCount, servers.length, requiredServerCount);
@@ -156,7 +156,7 @@ class Servers {
 
             // Decrement requiredServerCount while ram usage is more than configured max memory
             const otherMemory = config.proxyMemory + this.servers.reduce((acc, server) => acc + (server instanceof Lobby ? config.lobbyServerMemory : 0), 0);
-            while (otherMemory + requiredServerCount * config.gameServerMemory > config.maxMemory) requiredServerCount--;
+            while (otherMemory + requiredServerCount * config.gameServerMemory > config.maxMemory && config.maxMemory > 0) requiredServerCount--;
 
             if (servers.length < requiredServerCount)
                 console.log("Scaling up game servers...", totalPlayerCount, servers.length, requiredServerCount);

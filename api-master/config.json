@@ -5,11 +5,11 @@
     "proxyPort": 25566,
     "serversDir": "../servers",
     "lobbyServerTemplateDir": "../server-template",
-    "lobbyServerMemory": 2,
-    "lobbyPlayers": 8,
-    "lobbyMaxPlayers": 16,
+    "lobbyServerMemory": 4,
+    "lobbyPlayers": 50,
+    "lobbyMaxPlayers": 100,
     "gameServerTemplateDir": "../server-template",
     "gameServerMemory": 1,
-    "gamePlayers": 3,
-    "maxMemory": 16
+    "gamePlayers": 16,
+    "maxMemory": 0
 }

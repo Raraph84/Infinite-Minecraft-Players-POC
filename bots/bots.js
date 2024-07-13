@@ -41,12 +41,12 @@ const spawn = (i) => {
     });
 
     bot.on("kicked", (reason) => {
-        console.log(`${username} was kicked for :`, reason);
+        console.log(`${username} was kicked for : ${reason}`);
         setTimeout(() => spawn(i), 5 * 1000);
     });
 
     bot.on("error", (error) => {
-        console.log(`${username} encountered an error :`, error);
+        console.log(`${username} encountered an error : ${error}`);
     });
 
     let onLobby = true;

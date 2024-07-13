@@ -34,7 +34,7 @@ module.exports.run = async (request, servers) => {
         return;
     }
 
-    const availableLobby = servers.getAvailableLobby();
+    const availableLobby = servers.getAvailableLobby(request.jsonBody.uuid);
     if (!availableLobby) {
         request.end(400, "No server available");
         return;
