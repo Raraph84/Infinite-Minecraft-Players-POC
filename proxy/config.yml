@@ -33,6 +33,7 @@ permissions:
     - bungeecord.command.kick
     - bungeecord.command.list
     - bungeecord.command.reload
+    - bungeecord.command.send
     - bungeecord.command.server
   default: []
 player_limit: -1

@@ -12,11 +12,11 @@ module.exports.run = async (request, servers) => {
 
     const player = server.players.find((player) => player.uuid === request.urlParams.playerUuid);
     if (!player) {
-        request.end(400, "This player is not in this server");
+        request.end(400, "This player is already disconnected from this server");
         return;
     }
 
-    server.players.splice(server.players.indexOf(player), 1);
+    server.playerQuit(player.uuid);
 
     request.end(204);
 };

@@ -10,13 +10,14 @@ const spawn = (i) => {
 
     const bot = createBot({
         username,
-        host: "raraph.fr",
+        host: "127.0.0.1",
         port: 25566,
         version: "1.12.2",
         checkTimeoutInterval: 5 * 60 * 1000
     });
 
     let moveInterval;
+    let playTimeout;
 
     bot.on("login", () => {
 
@@ -29,20 +30,41 @@ const spawn = (i) => {
             bot.look(Math.round(Math.random() * 200 - 100), 0);
 
         }, 1000);
+
+        play();
     });
 
     bot.on("end", () => {
         clearInterval(moveInterval);
+        clearTimeout(playTimeout);
         console.log(`${username} has disconnected.`);
     });
 
     bot.on("kicked", (reason) => {
         console.log(`${username} was kicked for :`, reason);
+        setTimeout(() => spawn(i), 5 * 1000);
     });
 
     bot.on("error", (error) => {
         console.log(`${username} encountered an error :`, error);
     });
+
+    let onLobby = true;
+    const play = () => playTimeout = setTimeout(() => {
+
+        if (onLobby) {
+            onLobby = false;
+            bot.chat("/play");
+            console.log(`${username} is playing.`);
+        } else {
+            onLobby = true;
+            bot.chat("/lobby");
+            console.log(`${username} is in the lobby.`);
+        }
+
+        play();
+
+    }, Math.round(15 * 1000 + Math.random() * 2 * 60 * 1000));
 }
 
 for (let i = 0; i <= to - from; i++)

@@ -6,11 +6,11 @@ module.exports.run = async (request, servers) => {
 
     const player = servers.proxy.players.find((player) => player.uuid === request.urlParams.playerUuid);
     if (!player) {
-        request.end(400, "This player is not on the proxy");
+        request.end(400, "This player is already disconnected");
         return;
     }
 
-    servers.proxy.players.splice(servers.proxy.players.indexOf(player), 1);
+    servers.proxy.playerQuit(player.uuid);
 
     request.end(204);
 };

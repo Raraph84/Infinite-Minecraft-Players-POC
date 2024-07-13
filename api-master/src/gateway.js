@@ -18,6 +18,7 @@ const start = async (gateway, servers) => {
                 client.close("Please login");
         }, 10 * 1000);
     });
+
     gateway.on("command", (commandName, /** @type {import("raraph84-lib/src/WebSocketClient")} */ client, message) => {
 
         const command = commandsFiles.find((command) => command.infos.command === commandName);
@@ -33,6 +34,17 @@ const start = async (gateway, servers) => {
         }
 
         command.run(message, client, servers);
+    });
+
+    gateway.on("close", (/** @type {import("raraph84-lib/src/WebSocketClient")} */ client) => {
+
+        if (!client.infos.serverName) return;
+
+        let server;
+        if (client.infos.serverName === "proxy") server = servers.proxy;
+        else server = servers.servers.find((server) => server.name === client.infos.serverName);
+
+        server.gatewayDisconnected();
     });
 
     heartbeatInterval = setInterval(() => {

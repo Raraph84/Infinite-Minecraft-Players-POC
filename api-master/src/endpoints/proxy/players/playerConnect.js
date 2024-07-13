@@ -1,3 +1,5 @@
+const { Lobby, Game } = require("../../../Containers");
+
 /**
  * @param {import("raraph84-lib/src/Request")} request 
  * @param {import("../../../Servers")} servers 
@@ -9,7 +11,8 @@ module.exports.run = async (request, servers) => {
         return;
     }
 
-    if (!servers.proxy.players.some((player) => player.uuid === request.urlParams.playerUuid)) {
+    const player = servers.proxy.players.find((player) => player.uuid === request.urlParams.playerUuid);
+    if (!player) {
         request.end(400, "This player is not connected");
         return;
     }
@@ -24,15 +27,45 @@ module.exports.run = async (request, servers) => {
         return;
     }
 
-    const server = servers.servers.find((server) => server.name === request.jsonBody.serverName);
-    if (!server) {
-        request.end(400, "This server does not exist");
-        return;
-    }
+    let server;
+    if (request.jsonBody.serverName === "lobby") {
 
-    if (server.players.some((player) => player.uuid === request.urlParams.playerUuid)) {
-        request.end(400, "This player is already connected to this server");
-        return;
+        if (servers.servers.some((server) => server instanceof Lobby && server.players.some((p) => p.uuid === player.uuid))) {
+            request.end(400, "This player is already connected to this server");
+            return;
+        }
+
+        server = servers.getAvailableLobby();
+        if (!server) {
+            request.end(400, "No server available");
+            return;
+        }
+
+    } else if (request.jsonBody.serverName === "game") {
+
+        if (servers.servers.some((server) => server instanceof Game && server.players.some((p) => p.uuid === player.uuid))) {
+            request.end(400, "This player is already connected to this server");
+            return;
+        }
+
+        server = servers.getAvailableGame();
+        if (!server) {
+            request.end(400, "No server available");
+            return;
+        }
+
+    } else {
+
+        server = servers.servers.find((server) => server.name === request.jsonBody.serverName);
+        if (!server) {
+            request.end(400, "This server does not exist");
+            return;
+        }
+
+        if (server.players.some((p) => p.uuid === player.uuid)) {
+            request.end(400, "This player is already connected to this server");
+            return;
+        }
     }
 
     if (!servers.proxy.gatewayClient) {
@@ -40,7 +73,7 @@ module.exports.run = async (request, servers) => {
         return;
     }
 
-    servers.proxy.gatewayClient.emitEvent("CONNECT_PLAYER", { playerUuid: request.urlParams.playerUuid, serverName: server.name });
+    servers.proxy.gatewayClient.emitEvent("CONNECT_PLAYER", { playerUuid: player.uuid, serverName: server.name });
 
     request.end(204);
 };

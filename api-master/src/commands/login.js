@@ -49,6 +49,7 @@ module.exports.run = async (message, client, servers) => {
         if (server.gatewayClient)
             server.gatewayClient.close("Connected from another client");
 
+        client.infos.serverName = server.name;
         server.gatewayConnected(client);
     }
 

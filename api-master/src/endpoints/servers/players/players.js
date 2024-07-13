@@ -10,9 +10,7 @@ module.exports.run = async (request, servers) => {
         return;
     }
 
-    request.end(200, {
-        players: server.players.filter((player) => !player.connecting)
-    });
+    request.end(200, { players: server.players });
 };
 
 module.exports.infos = {

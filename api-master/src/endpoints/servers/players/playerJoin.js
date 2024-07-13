@@ -1,5 +1,3 @@
-const { Lobby } = require("../../../Containers");
-
 /**
  * @param {import("raraph84-lib/src/Request")} request 
  * @param {import("../../../Servers")} servers 
@@ -37,17 +35,12 @@ module.exports.run = async (request, servers) => {
         return;
     }
 
-    if (server.players.some((player) => player.uuid === request.jsonBody.uuid && !player.connecting)) {
-        request.end(400, "This player is already in this server");
+    if (server.players.some((player) => player.uuid === request.jsonBody.uuid)) {
+        request.end(400, "This player is already connected to this server");
         return;
     }
 
-    if (server instanceof Lobby) {
-        const player = server.players.find((player) => player.uuid === request.jsonBody.uuid && player.connecting);
-        if (player) server.players.splice(server.players.indexOf(player), 1);
-    }
-
-    server.players.push({ uuid: request.jsonBody.uuid, username: request.jsonBody.username });
+    server.playerJoin(request.jsonBody.uuid, request.jsonBody.username);
 
     request.end(204);
 };

@@ -61,7 +61,7 @@ public class API {
         if (req.getResponseCodeType() != HttpRequest.ResponseCodeType.SUCCESS)
             throw parseErrorMessage(req, res, "No server available");
 
-        return res.get("server").getAsString();
+        return res.get("serverName").getAsString();
     }
 
     public static void proxyPlayerQuit(UUID uuid) {
@@ -77,7 +77,7 @@ public class API {
         }
 
         if (req.getResponseCodeType() != HttpRequest.ResponseCodeType.SUCCESS)
-            throw parseErrorMessage(req, parseJsonResponse(req), "This player is not on the proxy");
+            throw parseErrorMessage(req, parseJsonResponse(req), "This player is already disconnected");
     }
 
     public static String getGatewayUrl() {

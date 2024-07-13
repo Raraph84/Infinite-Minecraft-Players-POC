@@ -49,6 +49,26 @@ public class API {
             throw parseErrorMessage(req, parseJsonResponse(req));
     }
 
+    public static void connectPlayer(UUID uuid, String serverName) {
+
+        JsonObject body = new JsonObject();
+        body.addProperty("serverName", serverName);
+
+        HttpRequest req = new HttpRequest(API_HOST + "/proxy/players/" + uuid.toString() + "/server");
+        req.setMethod("PUT");
+        req.setHeader("Authorization", Config.getApiKey());
+        req.setBody(body);
+        try {
+            req.send();
+        } catch (IOException error) {
+            MinecraftInfinitePlayersPOCServerPlugin.getInstance().getLogger().severe("API Error - " + req.getUrl());
+            throw new RuntimeException(error);
+        }
+
+        if (req.getResponseCodeType() != HttpRequest.ResponseCodeType.SUCCESS)
+            throw parseErrorMessage(req, parseJsonResponse(req), "No server available");
+    }
+
     public static String getGatewayUrl() {
         return API_HOST.replace("http", "ws") + "/gateway";
     }
