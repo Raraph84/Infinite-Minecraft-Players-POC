@@ -147,7 +147,7 @@ class Servers {
             scalingGames = true;
 
             const servers = this.servers.filter((server) => server instanceof Game);
-            const totalPlayerCount = servers.reduce((acc, server) => acc + server.players.length, 0);
+            const totalPlayerCount = servers.reduce((acc, server) => acc + (server.started ? config.gamePlayers : server.players.length), 0);
             let requiredServerCount = Math.max(1, Math.ceil(totalPlayerCount * 1.1 / config.gamePlayers)); // 10% more servers than required and minimum 1
 
             // Increment server count while there is not 20% of requiredServerCount not started
