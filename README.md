@@ -5,6 +5,6 @@ This is not new, Hypixel (and others) have probably already done it
 
 ### TODO
 
-- Create game servers
+- Save state on api restart
 - Scale proxies
 - Support of multiple nodes

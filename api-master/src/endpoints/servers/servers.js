@@ -4,9 +4,7 @@
  */
 module.exports.run = async (request, servers) => {
 
-    request.end(200, {
-        servers: servers.servers.map((server) => server.toApiObj())
-    });
+    request.end(200, { servers: servers.servers.map((server) => server.toApiObj()) });
 };
 
 module.exports.infos = {

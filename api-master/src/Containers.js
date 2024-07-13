@@ -16,8 +16,6 @@ class Container extends EventEmitter {
         super();
 
         this.servers = servers;
-        this.docker = servers.docker;
-        this.dockerEvents = servers.dockerEvents;
         this.name = name;
         this.path = path;
         this.port = port;
@@ -59,6 +57,16 @@ class Container extends EventEmitter {
         this._setState("starting");
 
         console.log("Starting container " + this.name + "...");
+
+        while (true) {
+            try {
+                await this.servers.docker.getContainer(this.name).remove({ force: true });
+            } catch (error) {
+                if (error.statusCode === 404) break;
+                else if (error.statusCode === 409) continue;
+                else throw error;
+            }
+        }
     }
 
     /**
@@ -72,7 +80,7 @@ class Container extends EventEmitter {
 
         this.servers.dockerEvents.on("rawEvent", this._bindDockerEventHandler);
 
-        const container = await this.docker.createContainer({
+        const container = await this.servers.docker.createContainer({
             name: this.name,
             User: process.getuid() + ":" + process.getgid(),
             ExposedPorts: { "25565/tcp": {} },
@@ -111,7 +119,7 @@ class Container extends EventEmitter {
 
         await this._send(command);
 
-        const killTimeout = setTimeout(() => this.kill(), 10 * 1000);
+        const killTimeout = setTimeout(() => this.kill(), 30 * 1000);
 
         await new Promise((resolve) => this.once("stopped", () => {
             clearTimeout(killTimeout);
@@ -125,6 +133,8 @@ class Container extends EventEmitter {
 
         this.servers.dockerEvents.removeListener("rawEvent", this._bindDockerEventHandler);
 
+        while (this.players.length > 0) this.playerQuit(this.players[0].uuid);
+
         this._setState("stopped");
         console.log("Container " + this.name + " stopped.");
     }
@@ -134,7 +144,7 @@ class Container extends EventEmitter {
      */
     async _send(content) {
 
-        const container = this.docker.getContainer(this.name);
+        const container = this.servers.docker.getContainer(this.name);
         const stream = await container.attach({ stream: true, stdin: true });
 
         await new Promise(async (resolve, reject) => {
@@ -152,14 +162,41 @@ class Container extends EventEmitter {
 
         if (this.state === "stopped") throw new Error("Already stopped");
 
-        await this.docker.getContainer(this.name).kill();
+        await this.servers.docker.getContainer(this.name).kill();
+    }
+
+    /**
+     * @param {string} uuid 
+     * @param {string} username 
+     */
+    playerJoin(uuid, username) {
+
+        if (this.players.some((player) => player.uuid === uuid)) throw new Error("This player is already connected");
+        this.players.push({ uuid, username });
+
+        this.emit("playerJoin", { uuid, username });
+        console.log("Player", username, "connected to", this.name);
+    }
+
+    /**
+     * @param {string} uuid 
+     */
+    playerQuit(uuid) {
+
+        const player = this.players.find((player) => player.uuid === uuid);
+
+        if (!player) throw new Error("This player is already disconnected");
+        this.players.splice(this.players.indexOf(player), 1);
+
+        this.emit("playerQuit", player);
+        console.log("Player", player.username, "disconnected from", this.name);
     }
 
     /**
      * @param {import("raraph84-lib/src/WebSocketClient")} client 
      */
     gatewayConnected(client) {
-        if (this.gatewayClient !== null) this.gatewayClient.close("Another client is already connected");
+        if (this.gatewayClient) this.gatewayClient.close("Another client is already connected");
         this.gatewayClient = client;
         this.emit("gatewayConnected");
         this.servers.gateway.clients.filter((client) => client.infos.logged).forEach((client) => client.emitEvent("SERVER_GATEWAY_CONNECTED", { name: this.name }));
@@ -167,7 +204,7 @@ class Container extends EventEmitter {
     }
 
     gatewayDisconnected() {
-        if (this.gatewayClient === null) throw new Error("No client connected");
+        if (!this.gatewayClient) throw new Error("No client connected");
         this.gatewayClient = null;
         this.emit("gatewayDisconnected");
         this.servers.gateway.clients.filter((client) => client.infos.logged).forEach((client) => client.emitEvent("SERVER_GATEWAY_DISCONNECTED", { name: this.name }));
@@ -175,7 +212,7 @@ class Container extends EventEmitter {
     }
 
     toApiObj() {
-        return { name: this.name, port: this.port, state: this.state, gatewayConnected: !!this.gatewayClient };
+        return { name: this.name, port: this.port, state: this.state, gatewayConnected: !!this.gatewayClient, players: this.players.length };
     }
 }
 
@@ -190,11 +227,9 @@ class Proxy extends Container {
 
     async _preStart() {
 
-        await super._preStart();
-
         let inspect;
         try {
-            inspect = await this.docker.getContainer(this.name).inspect();
+            inspect = await this.servers.docker.getContainer(this.name).inspect();
         } catch (error) {
         }
 
@@ -202,19 +237,9 @@ class Proxy extends Container {
             this.servers.dockerEvents.on("rawEvent", this._bindDockerEventHandler);
             this._setState("started");
             await this.stop();
-            await this._preStart();
-            return;
         }
 
-        while (true) {
-            try {
-                await this.docker.getContainer(this.name).remove({ force: true });
-            } catch (error) {
-                if (error.statusCode === 404) break;
-                else if (error.statusCode === 409) continue;
-                else throw error;
-            }
-        }
+        await super._preStart();
     }
 
     async start() {
@@ -239,17 +264,12 @@ class Server extends Container {
         super(servers, name, path.join(path.resolve(config.serversDir), name), port);
 
         this.maxPlayers = maxPlayers;
+        this.connectingPlayers = [];
     }
 
     async _preStart() {
 
         await super._preStart();
-
-        try {
-            await this.docker.getContainer(this.name).remove({ force: true });
-        } catch (error) {
-            if (error.statusCode !== 404) throw error;
-        }
 
         if (existsSync(this.path))
             await fs.rm(this.path, { recursive: true });
@@ -265,6 +285,25 @@ class Server extends Container {
 
     async stop() {
         await super.stop("stop");
+    }
+
+    playerConnecting(uuid) {
+
+        this.connectingPlayers.push(uuid);
+
+        const listener = (player) => {
+            if (player.uuid !== uuid) return;
+            this.off("playerJoin", listener);
+            clearTimeout(timeout);
+            this.connectingPlayers.splice(this.connectingPlayers.indexOf(uuid), 1);
+        };
+
+        const timeout = setTimeout(() => {
+            this.off("playerJoin", listener);
+            this.connectingPlayers.splice(this.connectingPlayers.indexOf(uuid), 1);
+        }, 5 * 1000);
+
+        this.on("playerJoin", listener);
     }
 
     toApiObj() {
@@ -298,10 +337,53 @@ class Lobby extends Server {
     async start() {
         await super.start(config.lobbyServerMemory);
     }
+}
 
-    toApiObj() {
-        return { ...super.toApiObj(), id: this.id };
+class Game extends Server {
+
+    /**
+     * @param {import("./Servers")} servers 
+     * @param {number} id 
+     */
+    constructor(servers, id) {
+
+        super(servers, "game" + id, 25300 + id, config.gamePlayers);
+
+        this.id = id;
+        this.started = false;
+
+        this.on("playerJoin", () => {
+            if (this.players.length !== config.gamePlayers) return;
+            this.started = true;
+            console.log("Game", this.id, "started.");
+        });
+
+        this.on("playerQuit", async () => {
+            if (!this.started || this.players.length !== 0) return;
+            console.log("Game", this.id, "finished.");
+            await this.stop();
+            await this.start();
+        });
+    }
+
+    async _preStart() {
+
+        await super._preStart();
+
+        await fs.cp(path.resolve(config.gameServerTemplateDir), this.path, { recursive: true });
+
+        const configFile = path.join(this.path, "plugins", "Infinite-Minecraft-Players-POC-Server-Plugin", "config.yml");
+        await fs.writeFile(configFile, (await fs.readFile(configFile, "utf8")).replace("SERVERNAME", this.name));
+    }
+
+    async start() {
+        await super.start(config.gameServerMemory);
+    }
+
+    async _postStop() {
+        await super._postStop();
+        this.started = false;
     }
 }
 
-module.exports = { Container, Proxy, Server, Lobby };
+module.exports = { Container, Proxy, Server, Lobby, Game };

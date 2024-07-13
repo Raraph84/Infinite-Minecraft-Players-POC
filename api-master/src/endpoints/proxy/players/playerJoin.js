@@ -1,6 +1,3 @@
-const { Lobby } = require("../../../Containers");
-const config = require("../../../../config.json");
-
 /**
  * @param {import("raraph84-lib/src/Request")} request 
  * @param {import("../../../Servers")} servers 
@@ -33,35 +30,19 @@ module.exports.run = async (request, servers) => {
     }
 
     if (servers.proxy.players.some((player) => player.uuid === request.jsonBody.uuid)) {
-        request.end(400, "This player is already on the proxy");
+        request.end(400, "This player is already connected");
         return;
     }
 
-    const availableLobbies = servers.servers.filter((server) => server instanceof Lobby && server.gatewayClient);
-    let availableLobby = availableLobbies.find((server) => server.players.length < config.lobbyPlayers);
-    if (!availableLobby) {
-        availableLobbies.sort((a, b) => a.players.length - b.players.length);
-        availableLobby = availableLobbies.find((server) => server.players.length < config.lobbyMaxPlayers);
-    }
-
+    const availableLobby = servers.getAvailableLobby();
     if (!availableLobby) {
         request.end(400, "No server available");
         return;
     }
 
-    servers.proxy.players.push({ uuid: request.jsonBody.uuid, username: request.jsonBody.username })
+    servers.proxy.playerJoin(request.jsonBody.uuid, request.jsonBody.username);
 
-    availableLobby.players.push({ uuid: request.jsonBody.uuid, username: request.jsonBody.username, connecting: true });
-    setTimeout(() => {
-        const player = availableLobby.players.find((player) => player.uuid === request.jsonBody.uuid && player.connecting);
-        if (player) availableLobby.players.splice(availableLobby.players.indexOf(player), 1);
-    }, 5 * 1000);
-
-    console.log("Connecting player", request.jsonBody.username, "to", availableLobby.name);
-
-    request.end(200, {
-        server: availableLobby.name
-    });
+    request.end(200, { serverName: availableLobby.name });
 };
 
 module.exports.infos = {

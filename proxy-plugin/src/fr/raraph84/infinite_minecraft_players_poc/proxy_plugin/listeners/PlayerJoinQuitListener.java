@@ -18,7 +18,7 @@ public class PlayerJoinQuitListener implements Listener {
             server = API.proxyPlayerJoin(event.getPlayer().getUniqueId(), event.getPlayer().getName());
         } catch (RuntimeException exception) {
             if (exception.getMessage().equals("No server available")) {
-                event.getPlayer().disconnect(new TextComponent("There is no server available at the moment, please try again later."));
+                event.getPlayer().disconnect(new TextComponent("§cThere is no server available at the moment, please try again later."));
                 return;
             } else
                 throw exception;
@@ -33,7 +33,7 @@ public class PlayerJoinQuitListener implements Listener {
         try {
             API.proxyPlayerQuit(event.getPlayer().getUniqueId());
         } catch (RuntimeException exception) {
-            if (!exception.getMessage().equals("This player is not on the proxy"))
+            if (!exception.getMessage().equals("This player is already disconnected"))
                 throw exception;
         }
     }

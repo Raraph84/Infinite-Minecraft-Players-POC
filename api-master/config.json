@@ -6,7 +6,10 @@
     "serversDir": "../servers",
     "lobbyServerTemplateDir": "../server-template",
     "lobbyServerMemory": 2,
-    "lobbyPlayers": 10,
-    "lobbyMaxPlayers": 20,
+    "lobbyPlayers": 8,
+    "lobbyMaxPlayers": 16,
+    "gameServerTemplateDir": "../server-template",
+    "gameServerMemory": 1,
+    "gamePlayers": 3,
     "maxRam": 20
 }

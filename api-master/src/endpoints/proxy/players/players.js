@@ -4,9 +4,7 @@
  */
 module.exports.run = async (request, servers) => {
 
-    request.end(200, {
-        players: servers.proxy.players
-    });
+    request.end(200, { players: servers.proxy.players });
 };
 
 module.exports.infos = {
