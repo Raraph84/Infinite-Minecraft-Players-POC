@@ -384,6 +384,10 @@ class Game extends Server {
         await super._postStop();
         this.started = false;
     }
+
+    toApiObj() {
+        return { ...super.toApiObj(), started: this.started };
+    }
 }
 
 module.exports = { Container, Proxy, Server, Lobby, Game };

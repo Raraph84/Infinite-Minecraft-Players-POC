@@ -35,7 +35,7 @@ module.exports.run = async (request, servers) => {
             return;
         }
 
-        server = servers.getAvailableLobby();
+        server = servers.getAvailableLobby(player.uuid);
         if (!server) {
             request.end(400, "No server available");
             return;
@@ -48,7 +48,7 @@ module.exports.run = async (request, servers) => {
             return;
         }
 
-        server = servers.getAvailableGame();
+        server = servers.getAvailableGame(player.uuid);
         if (!server) {
             request.end(400, "No server available");
             return;
