@@ -11,7 +11,7 @@ const spawn = (i) => {
     const bot = createBot({
         username,
         host: "127.0.0.1",
-        port: 25566,
+        port: 25565,
         version: "1.12.2",
         checkTimeoutInterval: 5 * 60 * 1000
     });

@@ -52,7 +52,7 @@ And replace it in `proxy-plugin/libs/` and `server-plugin/libs/`
 ### SLF4J
 SLF4J API and Simple is required by Java websocket to run without errors on the Spigot (probably already built in BungeeCord)  
 You can build the jars on [its repository](https://github.com/qos-ch/slf4j)  
-Or download them on mvnrepository : [SLF4J API](https://mvnrepository.com/artifact/org.slf4j/slf4j-api) and [SLF4J Simple](https://mvnrepository.com/artifact/org.slf4j/slf4j-simple)
+Or download them on mvnrepository : [SLF4J API](https://mvnrepository.com/artifact/org.slf4j/slf4j-api) and [SLF4J Simple](https://mvnrepository.com/artifact/org.slf4j/slf4j-simple)  
 And replace them in `server-plugin/libs/`
 
 ### Proxy plugin
@@ -70,13 +70,13 @@ You can import `server-plugin/` into an IDE like IntelliJ and import the libs in
 Then build the jar and replace it in `server-template/plugins/`
 
 ### Spark
-Spark is not required but useful for debugging lag on the proxy or the Spigots
+Spark is not required but useful for debugging lag on the proxy or the Spigots  
 You can build Spark on [its repository](https://github.com/lucko/spark)  
 Or download it on [its website](https://spark.lucko.me/download)  
 And replace it in `proxy/plugins/` and `server-template/plugins/`
 
 ### WorldEdit
-WorldEdit is not required but useful to have on every server
+WorldEdit is not required but useful to have on every server  
 You can build WeoldEdit on [its repository](https://github.com/EngineHub/WorldEdit)  
 Or download it on [its CurseForge Bukkit page](https://dev.bukkit.org/projects/worldedit/files)  
 And replace it in `server-template/plugins/`

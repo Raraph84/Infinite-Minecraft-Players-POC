@@ -2,7 +2,7 @@
     "port": 8080,
     "proxyDir": "../proxy",
     "proxyMemory": 4,
-    "proxyPort": 25566,
+    "proxyPort": 25565,
     "serversDir": "../servers",
     "lobbyServerTemplateDir": "../server-template",
     "lobbyServerMemory": 4,
