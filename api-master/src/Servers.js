@@ -24,6 +24,9 @@ class Servers {
 
         this.scalingLobbies = false;
         this.scalingGames = false;
+
+        this.savingState = false;
+        this.needSaveState = false;
     }
 
     async startLobbyServer() {
@@ -107,6 +110,14 @@ class Servers {
 
     async saveState() {
 
+        if (this.savingState) {
+            this.needSaveState = true;
+            return;
+        }
+
+        this.needSaveState = false;
+        this.savingState = true;
+
         const state = {
             proxy: {
                 state: this.proxy.state
@@ -118,6 +129,11 @@ class Servers {
         };
 
         await fs.writeFile(stateFile, JSON.stringify(state, null, 4));
+
+        this.savingState = false;
+
+        if (this.needSaveState)
+            this.saveState();
     }
 
     async loadState() {
@@ -166,8 +182,8 @@ class Servers {
         await this.scaleLobbies();
         await this.scaleGames();
 
-        setInterval(() => this.scaleLobbies(), 2000);
-        setInterval(() => this.scaleGames(), 2000);
+        setInterval(() => this.scaleLobbies(), config.lobbyServersScalingInterval);
+        setInterval(() => this.scaleGames(), config.gameServersScalingInterval);
     }
 
     async scaleLobbies() {
