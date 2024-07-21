@@ -27,7 +27,7 @@ class Servers {
         const server = new Lobby(this, id);
         this.servers.push(server);
 
-        this.gateway.clients.filter((client) => client.infos.logged).forEach((client) => client.emitEvent("SERVER_CREATED", server.toApiObj()));
+        this.gateway.clients.filter((client) => client.infos.logged).forEach((client) => client.emitEvent("SERVER_CREATED", server.toApiObj(true)));
 
         await server.start();
 
@@ -61,7 +61,7 @@ class Servers {
         const server = new Game(this, id);
         this.servers.push(server);
 
-        this.gateway.clients.filter((client) => client.infos.logged).forEach((client) => client.emitEvent("SERVER_CREATED", server.toApiObj()));
+        this.gateway.clients.filter((client) => client.infos.logged).forEach((client) => client.emitEvent("SERVER_CREATED", server.toApiObj(true)));
 
         await server.start();
 
@@ -73,7 +73,7 @@ class Servers {
      */
     getAvailableGame(playerUuid) {
 
-        const availableGames = this.servers.filter((server) => server instanceof Game && server.gatewayClient && !server.started);
+        const availableGames = this.servers.filter((server) => server instanceof Game && server.gatewayClient && !server.gameStarted);
         const availableGame = availableGames.find((server) => (server.players.length + server.connectingPlayers.length) < config.gamePlayers);
 
         if (availableGame) availableGame.playerConnecting(playerUuid);

@@ -105,9 +105,11 @@ public class Gateway {
             switch (event) {
 
                 case "LOGGED":
+                    MinecraftInfinitePlayersPOCProxyPlugin.getInstance().getProxy().getPlayers().forEach((player) -> API.proxyPlayerJoin(player.getUniqueId(), player.getName()));
                     state = State.CONNECTED;
                     latch.countDown();
                     break;
+
                 case "HEARTBEAT":
                     Gateway.send("HEARTBEAT", new JsonObject());
                     break;
@@ -116,10 +118,9 @@ public class Gateway {
                     Servers.onServerAdded(new Servers.Server(message));
                     break;
 
-                case "SERVER_REMOVED": {
+                case "SERVER_REMOVED":
                     Servers.onServerRemoved(Servers.getServer(message.get("name").getAsString()));
                     break;
-                }
 
                 case "CONNECT_PLAYER": {
 

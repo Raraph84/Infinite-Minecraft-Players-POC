@@ -4,6 +4,7 @@
     "proxyMemory": 4,
     "proxyPort": 25565,
     "serversDir": "../servers",
+    "serversStartingPort": 25000,
     "lobbyServerTemplateDir": "../server-template",
     "lobbyServerMemory": 4,
     "lobbyPlayers": 50,
