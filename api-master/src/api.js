@@ -42,17 +42,19 @@ const start = async (api, gateway, servers) => {
 
         request.urlParams = endpoint.params;
 
-        if (endpoint.infos.requireLogin) {
+        if (endpoint.infos.requireLogin && !request.headers.authorization) {
+            request.end(401, "Missing authorization");
+            return;
+        }
 
-            if (!request.headers.authorization) {
-                request.end(401, "Missing authorization");
-                return;
-            }
+        if (request.headers.authorization) {
 
             if (request.headers.authorization !== process.env.API_KEY) {
                 request.end(401, "Invalid token");
                 return;
             }
+
+            request.logged = true;
         }
 
         endpoint.run(request, servers);

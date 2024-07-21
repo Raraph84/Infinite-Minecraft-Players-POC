@@ -133,8 +133,6 @@ class Container extends EventEmitter {
 
         this.servers.dockerEvents.removeListener("rawEvent", this._bindDockerEventHandler);
 
-        while (this.players.length > 0) this.playerQuit(this.players[0].uuid);
-
         this._setState("stopped");
         console.log("Container " + this.name + " stopped.");
     }
@@ -175,7 +173,7 @@ class Container extends EventEmitter {
         this.players.push({ uuid, username });
 
         this.emit("playerJoin", { uuid, username });
-        console.log("Player", username, "connected to", this.name);
+        console.log("Player " + username + " connected to " + this.name + ".");
     }
 
     /**
@@ -189,7 +187,7 @@ class Container extends EventEmitter {
         this.players.splice(this.players.indexOf(player), 1);
 
         this.emit("playerQuit", player);
-        console.log("Player", player.username, "disconnected from", this.name);
+        console.log("Player " + player.username + " disconnected from " + this.name + ".");
     }
 
     /**
@@ -205,14 +203,20 @@ class Container extends EventEmitter {
 
     gatewayDisconnected() {
         if (!this.gatewayClient) throw new Error("No client connected");
+        while (this.players.length > 0) this.playerQuit(this.players[0].uuid);
         this.gatewayClient = null;
         this.emit("gatewayDisconnected");
         this.servers.gateway.clients.filter((client) => client.infos.logged).forEach((client) => client.emitEvent("SERVER_GATEWAY_DISCONNECTED", { name: this.name }));
         console.log("Container " + this.name + " disconnected from the gateway.");
     }
 
-    toApiObj() {
-        return { name: this.name, port: this.port, state: this.state, gatewayConnected: !!this.gatewayClient, players: this.players.length };
+    /**
+     * @param {boolean} logged 
+     */
+    toApiObj(logged) {
+        return logged
+            ? { name: this.name, port: this.port, state: this.state, gatewayConnected: !!this.gatewayClient, players: this.players.length }
+            : { name: this.name, state: this.state, gatewayConnected: !!this.gatewayClient, players: this.players.length };
     }
 }
 
@@ -256,10 +260,12 @@ class Server extends Container {
     /**
      * @param {import("./Servers")} servers 
      * @param {string} name 
-     * @param {number} port 
      * @param {number} maxPlayers 
      */
-    constructor(servers, name, port, maxPlayers) {
+    constructor(servers, name, maxPlayers) {
+
+        let port = config.serversStartingPort;
+        while (servers.servers.some((server) => server.port === port)) port++;
 
         super(servers, name, path.join(path.resolve(config.serversDir), name), port);
 
@@ -306,8 +312,11 @@ class Server extends Container {
         this.on("playerJoin", listener);
     }
 
-    toApiObj() {
-        return { ...super.toApiObj(), maxPlayers: this.maxPlayers };
+    /**
+     * @param {boolean} logged 
+     */
+    toApiObj(logged) {
+        return { ...super.toApiObj(logged), maxPlayers: this.maxPlayers };
     }
 }
 
@@ -319,7 +328,7 @@ class Lobby extends Server {
      */
     constructor(servers, id) {
 
-        super(servers, "lobby" + id, 25200 + id, config.lobbyMaxPlayers);
+        super(servers, "lobby" + id, config.lobbyMaxPlayers);
 
         this.id = id;
     }
@@ -347,19 +356,19 @@ class Game extends Server {
      */
     constructor(servers, id) {
 
-        super(servers, "game" + id, 25300 + id, config.gamePlayers);
+        super(servers, "game" + id, config.gamePlayers);
 
         this.id = id;
-        this.started = false;
+        this.gameStarted = false;
 
         this.on("playerJoin", () => {
             if (this.players.length !== config.gamePlayers) return;
-            this.started = true;
+            this.gameStarted = true;
             console.log("Game", this.id, "started.");
         });
 
         this.on("playerQuit", async () => {
-            if (!this.started || this.players.length !== 0) return;
+            if (!this.gameStarted || this.players.length !== 0) return;
             console.log("Game", this.id, "finished.");
             await this.stop();
             await this.start();
@@ -382,11 +391,14 @@ class Game extends Server {
 
     async _postStop() {
         await super._postStop();
-        this.started = false;
+        this.gameStarted = false;
     }
 
-    toApiObj() {
-        return { ...super.toApiObj(), started: this.started };
+    /**
+     * @param {boolean} logged 
+     */
+    toApiObj(logged) {
+        return { ...super.toApiObj(logged), gameStarted: this.gameStarted };
     }
 }
 

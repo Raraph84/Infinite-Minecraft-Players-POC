@@ -100,9 +100,11 @@ public class Gateway {
             switch (event) {
 
                 case "LOGGED":
+                    MinecraftInfinitePlayersPOCServerPlugin.getInstance().getServer().getOnlinePlayers().forEach((player) -> API.serverPlayerJoin(player.getUniqueId(), player.getName()));
                     state = State.CONNECTED;
                     latch.countDown();
                     break;
+
                 case "HEARTBEAT":
                     Gateway.send("HEARTBEAT", new JsonObject());
                     break;

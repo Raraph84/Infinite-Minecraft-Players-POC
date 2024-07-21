@@ -29,6 +29,7 @@ permissions:
   admin:
     - bungeecord.command.alert
     - bungeecord.command.end
+    - bungeecord.command.find
     - bungeecord.command.ip
     - bungeecord.command.kick
     - bungeecord.command.list
@@ -44,7 +45,7 @@ remote_ping_timeout: 5000
 server_connect_timeout: 5000
 servers:
   lobby:
-    address: 172.17.0.1:25101
+    address: 172.17.0.1:25000
     motd: ""
     restricted: false
 stats: 80eb5776-ea8f-4f35-99d1-28efb9998d9e
