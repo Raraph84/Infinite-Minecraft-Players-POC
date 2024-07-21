@@ -35,6 +35,7 @@ class Container extends EventEmitter {
     _setState(state) {
         this.state = state;
         this.emit(state);
+        this.servers.saveState();
         this.servers.gateway.clients.filter((client) => client.infos.logged).forEach((client) => client.emitEvent("SERVER_STATE", { name: this.name, state: state }));
     }
 
@@ -229,23 +230,6 @@ class Proxy extends Container {
         super(servers, "proxy", path.resolve(config.proxyDir), config.proxyPort);
     }
 
-    async _preStart() {
-
-        let inspect;
-        try {
-            inspect = await this.servers.docker.getContainer(this.name).inspect();
-        } catch (error) {
-        }
-
-        if (inspect?.State.Running) {
-            this.servers.dockerEvents.on("rawEvent", this._bindDockerEventHandler);
-            this._setState("started");
-            await this.stop();
-        }
-
-        await super._preStart();
-    }
-
     async start() {
         await super.start(config.proxyMemory, "BungeeCord.jar", true);
     }
@@ -364,6 +348,7 @@ class Game extends Server {
         this.on("playerJoin", () => {
             if (this.players.length !== config.gamePlayers) return;
             this.gameStarted = true;
+            this.servers.saveState();
             console.log("Game", this.id, "started.");
         });
 
@@ -390,8 +375,8 @@ class Game extends Server {
     }
 
     async _postStop() {
-        await super._postStop();
         this.gameStarted = false;
+        await super._postStop();
     }
 
     /**

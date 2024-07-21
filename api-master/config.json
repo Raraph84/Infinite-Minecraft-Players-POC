@@ -12,5 +12,6 @@
     "gameServerTemplateDir": "../server-template",
     "gameServerMemory": 1,
     "gamePlayers": 16,
-    "maxMemory": 0
+    "maxMemory": 0,
+    "stateFile": "./state.json"
 }

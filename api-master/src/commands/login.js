@@ -38,7 +38,7 @@ module.exports.run = async (message, client, servers) => {
     if (typeof message.server === "string") {
 
         let server;
-        if (message.server === "proxy") server = servers.proxy;
+        if (message.server === servers.proxy.name) server = servers.proxy;
         else server = servers.servers.find((server) => server.name === message.server);
 
         if (!server) {
