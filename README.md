@@ -84,6 +84,5 @@ And replace it in `server-template/plugins/`
 
 ## TODO
 
-- Save state on api restart
 - Scale proxies
 - Support of multiple nodes

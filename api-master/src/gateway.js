@@ -41,7 +41,7 @@ const start = async (gateway, servers) => {
         if (!client.infos.serverName) return;
 
         let server;
-        if (client.infos.serverName === "proxy") server = servers.proxy;
+        if (client.infos.serverName === servers.proxy.name) server = servers.proxy;
         else server = servers.servers.find((server) => server.name === client.infos.serverName);
 
         server.gatewayDisconnected();
