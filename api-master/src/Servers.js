@@ -185,7 +185,7 @@ class Servers {
 
         if (servers.length < requiredServerCount)
             console.log("Scaling up lobby servers...", totalPlayerCount, servers.length, requiredServerCount);
-        else if (servers.length > requiredServerCount)
+        else if (servers.length > requiredServerCount && servers.some((server) => server.players.length === 0 && server.state === "started"))
             console.log("Scaling down lobby servers...", totalPlayerCount, servers.length, requiredServerCount);
 
         while (servers.length < requiredServerCount) {
@@ -210,11 +210,11 @@ class Servers {
 
         const servers = this.servers.filter((server) => server instanceof Game);
         const totalPlayerCount = servers.reduce((acc, server) => acc + (server.gameStarted ? config.gamePlayers : server.players.length), 0);
-        let requiredServerCount = Math.max(1, Math.ceil(totalPlayerCount * 1.1 / config.gamePlayers)); // 10% more servers than required and minimum 1
+        let requiredServerCount = Math.max(1, Math.ceil(totalPlayerCount * 1.25 / config.gamePlayers)); // 25% more servers than required and minimum 1
 
-        // Increment server count while there is not 20% of requiredServerCount not started
+        // Increment server count while there is not 25% of requiredServerCount not started
         let notStartedServerCount = servers.filter((server) => !server.gameStarted).length + (requiredServerCount - servers.length);
-        if (notStartedServerCount / requiredServerCount < 0.2) { requiredServerCount++; notStartedServerCount++; }
+        if (notStartedServerCount / requiredServerCount < 0.25) { requiredServerCount++; notStartedServerCount++; }
 
         // Decrement requiredServerCount while ram usage is more than configured max memory
         const otherMemory = config.proxyMemory + this.servers.reduce((acc, server) => acc + (server instanceof Lobby ? config.lobbyServerMemory : 0), 0);
@@ -222,7 +222,7 @@ class Servers {
 
         if (servers.length < requiredServerCount)
             console.log("Scaling up game servers...", totalPlayerCount, servers.length, requiredServerCount);
-        else if (servers.length > requiredServerCount)
+        else if (servers.length > requiredServerCount && servers.some((server) => server.players.length === 0 && server.state === "started" && !server.gameStarted))
             console.log("Scaling down game servers...", totalPlayerCount, servers.length, requiredServerCount);
 
         while (servers.length < requiredServerCount) {
@@ -231,7 +231,7 @@ class Servers {
         }
 
         while (servers.length > requiredServerCount) {
-            const server = [...servers].reverse().find((server) => server.players.length === 0 && server.state === "started" && !server.started);
+            const server = [...servers].reverse().find((server) => server.players.length === 0 && server.state === "started" && !server.gameStarted);
             if (!server) break;
             await this.removeServer(server);
             servers.splice(servers.indexOf(server), 1);
