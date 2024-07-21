@@ -147,8 +147,11 @@ class Servers {
                 if (server instanceof Game && serverState.gameStarted) server.gameStarted = true;
                 this.dockerEvents.on("rawEvent", server._bindDockerEventHandler);
                 server._setState("started");
-            }
+            } else
+                await server.start();
         }
+
+        await new Promise((resolve) => setTimeout(resolve, 4000)); // Wait 4 seconds for servers to reconnect to the gateway
     }
 
     async start() {
@@ -206,11 +209,11 @@ class Servers {
         this.scalingGames = true;
 
         const servers = this.servers.filter((server) => server instanceof Game);
-        const totalPlayerCount = servers.reduce((acc, server) => acc + (server.started ? config.gamePlayers : server.players.length), 0);
+        const totalPlayerCount = servers.reduce((acc, server) => acc + (server.gameStarted ? config.gamePlayers : server.players.length), 0);
         let requiredServerCount = Math.max(1, Math.ceil(totalPlayerCount * 1.1 / config.gamePlayers)); // 10% more servers than required and minimum 1
 
         // Increment server count while there is not 20% of requiredServerCount not started
-        let notStartedServerCount = servers.filter((server) => !server.started).length + (requiredServerCount - servers.length);
+        let notStartedServerCount = servers.filter((server) => !server.gameStarted).length + (requiredServerCount - servers.length);
         if (notStartedServerCount / requiredServerCount < 0.2) { requiredServerCount++; notStartedServerCount++; }
 
         // Decrement requiredServerCount while ram usage is more than configured max memory
