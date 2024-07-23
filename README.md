@@ -20,17 +20,17 @@ Copy `config.example.yml` to `config.yml` and fill it with the generated key
 - in `proxy/plugins/Infinite-Minecraft-Players-POC-Proxy-Plugin/`
 - and `server-template/plugins/Infinite-Minecraft-Players-POC-Server-Plugin/`
 
-Copy `api-master/.env.example` to `api-master/.env` and fill it with the same generated key
+Copy `api/.env.example` to `api/.env` and fill it with the same generated key
 
 ### Step 3 : Install libs
-Go to `api-master/` and run `npm install --omit=dev` to avoid useless packages  
+Go to `api/` and run `npm install --omit=dev` to avoid useless packages  
 Go to `bots/` and run `npm install --omit=dev` for the same reason
 
 ### Step 4 : Pull Java Docker image
 Run `docker pull openjdk:8`
 
 ### Step 5 : Start the API and the bots
-Open a terminal and go to `api-master/`, then run `node index.js`  
+Open a terminal and go to `api/`, then run `node index.js`  
 Open another terminal and go to `bots/`, then run `node index.js <player count> <delay between each player join>`  
 For example, if I want 100 bots with 1 second delay between each join, I can run `node index.js 100 1000`
 
