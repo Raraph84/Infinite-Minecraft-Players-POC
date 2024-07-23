@@ -83,7 +83,6 @@ class Container extends EventEmitter {
 
         const container = await this.servers.docker.createContainer({
             name: this.name,
-            User: process.getuid() + ":" + process.getgid(),
             ExposedPorts: { "25565/tcp": {} },
             Tty: true,
             OpenStdin: true,

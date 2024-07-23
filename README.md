@@ -8,15 +8,16 @@ This is not new, Hypixel (and others) have probably already done it
 ### Prerequisites :
 - A Linux server
 - Have installed [Docker](https://docs.docker.com/engine/install/)
-- Have installed [NodeJS](https://nodejs.org/en/download/package-manager)
+
+The installation can be run with any user, but the same for each step, and will create files as root.  
+The installation will be in the `~/infinite-minecraft-players-poc/` dir.
 
 ### Step 1 : Clone the repository
 Clone the repository with `alpine/git` Docker image by running
 ```
 docker run -it --rm \
-    --user $(id -u):$(id -g) \
     --volume ~:/git \
-    alpine/git clone https://github.com/Raraph84/Infinite-Minecraft-Players-POC     infinite-minecraft-players-poc/
+    alpine/git clone https://github.com/Raraph84/Infinite-Minecraft-Players-POC.git infinite-minecraft-players-poc/
 ```
 
 ### Step 2 : Set the API key
@@ -28,13 +29,49 @@ Copy `config.example.yml` to `config.yml` and fill it with the generated key
 Copy `api/.env.example` to `api/.env` and fill it with the same generated key
 
 ### Step 3 : Install the libs
-Go to `api/` and run `npm install --omit=dev` to avoid useless packages  
-Go to `bots/` and run `npm install --omit=dev` for the same reason
+Install the libs by running
+```
+docker run -it --rm \
+    --volume ~/infinite-minecraft-players-poc:/home/infinite-minecraft-players-poc \
+    --workdir /home/infinite-minecraft-players-poc/api \
+    node npm install --omit=dev
+```
+and
+```
+docker run -it --rm \
+    --volume ~/infinite-minecraft-players-poc:/home/infinite-minecraft-players-poc \
+    --workdir /home/infinite-minecraft-players-poc/bots \
+    node npm install --omit=dev
+```
 
-### Step 4 : Start the API and the bots
-Open a terminal and go to `api/`, then run `node index.js`  
-Open another terminal and go to `bots/`, then run `node index.js <player count> <delay between each player join>`  
-For example, if I want 100 bots with 1 second delay between each join, I can run `node index.js 100 1000`
+### Step 4 : Start the API
+Open a terminal and run
+```
+docker run -it --init \
+    --name api \
+    --volume ~/infinite-minecraft-players-poc:$HOME/infinite-minecraft-players-poc \
+    --volume /var/run/docker.sock:/var/run/docker.sock \
+    --workdir $HOME/infinite-minecraft-players-poc/api \
+    --publish 172.17.0.1:8080:8080 \
+    node index.js
+```
+To expose the API, you can remove the `172.17.0.1:` part  
+
+### Step 5 : Start the bots
+Open a terminal and run
+```
+docker run -it --rm --init \
+    --volume ~/infinite-minecraft-players-poc:/home/infinite-minecraft-players-poc \
+    --workdir /home/infinite-minecraft-players-poc/bots \
+    node index.js <player count> <delay between each player join>
+```
+For example, for 100 bots with 1 second delay between each join, run
+```
+docker run -it --rm --init \
+    --volume ~/infinite-minecraft-players-poc:/home/infinite-minecraft-players-poc \
+    --workdir /home/infinite-minecraft-players-poc/bots \
+    node index.js 100 1000
+```
 
 ## Compiling jars
 
