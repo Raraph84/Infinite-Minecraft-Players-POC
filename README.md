@@ -7,12 +7,17 @@ This is not new, Hypixel (and others) have probably already done it
 
 ### Prerequisites :
 - A Linux server
-- Installed [Docker](https://docs.docker.com/engine/install/)
-- Installed [NodeJS](https://nodejs.org/en/download/package-manager)
-- Installed git (for cloning the repo)
+- Have installed [Docker](https://docs.docker.com/engine/install/)
+- Have installed [NodeJS](https://nodejs.org/en/download/package-manager)
 
-### Step 1 : Cloning the repo
-Run `git clone https://github.com/Raraph84/Infinite-Minecraft-Players-POC ~/infinite-minecraft-players-poc`
+### Step 1 : Clone the repository
+Clone the repository with `alpine/git` Docker image by running
+```
+docker run -it --rm \
+    --user $(id -u):$(id -g) \
+    --volume ~:/git \
+    alpine/git clone https://github.com/Raraph84/Infinite-Minecraft-Players-POC     infinite-minecraft-players-poc/
+```
 
 ### Step 2 : Set the API key
 Generate a random string of the length that you want (100 is good)  
@@ -22,14 +27,11 @@ Copy `config.example.yml` to `config.yml` and fill it with the generated key
 
 Copy `api/.env.example` to `api/.env` and fill it with the same generated key
 
-### Step 3 : Install libs
+### Step 3 : Install the libs
 Go to `api/` and run `npm install --omit=dev` to avoid useless packages  
 Go to `bots/` and run `npm install --omit=dev` for the same reason
 
-### Step 4 : Pull Java Docker image
-Run `docker pull openjdk:8`
-
-### Step 5 : Start the API and the bots
+### Step 4 : Start the API and the bots
 Open a terminal and go to `api/`, then run `node index.js`  
 Open another terminal and go to `bots/`, then run `node index.js <player count> <delay between each player join>`  
 For example, if I want 100 bots with 1 second delay between each join, I can run `node index.js 100 1000`

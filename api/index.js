@@ -19,6 +19,19 @@ tasks.addTask(async (resolve) => {
 
 const docker = new Dockerode();
 
+tasks.addTask(async (resolve, reject) => {
+    console.log("Pulling openjdk:8 Docker image...");
+    docker.modem.followProgress(await docker.pull("openjdk:8"), (error) => {
+        if (error) {
+            console.log("Cannot pull openjdk:8 Docker image - " + error);
+            reject();
+        } else {
+            console.log("Pulled openjdk:8 Docker image.");
+            resolve();
+        }
+    });
+}, (resolve) => resolve());
+
 const dockerEvents = new DockerEventListener(docker);
 tasks.addTask(async (resolve) => {
     console.log("Connecting to Docker events...");
