@@ -179,8 +179,8 @@ class Servers {
 
         console.log("Starting not started servers...");
         if (this.proxy.state !== "started") this.proxy.start();
-        await this.scaleLobbies();
-        await this.scaleGames();
+        this.scaleLobbies();
+        this.scaleGames();
 
         setInterval(() => this.scaleLobbies(), config.lobbyServersScalingInterval);
         setInterval(() => this.scaleGames(), config.gameServersScalingInterval);
