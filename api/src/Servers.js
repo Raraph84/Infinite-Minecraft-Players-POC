@@ -50,12 +50,13 @@ class Servers {
      */
     getAvailableLobby(playerUuid) {
 
+        const pcount = (server) => server.players.length + server.connectingPlayers.length;
         const availableLobbies = this.servers.filter((server) => server instanceof Lobby && server.gatewayClient);
 
-        let availableLobby = availableLobbies.find((server) => (server.players.length + server.connectingPlayers.length) < config.lobbyPlayers);
+        let availableLobby = availableLobbies.find((server) => pcount(server) < config.lobbyPlayers);
         if (!availableLobby) {
-            availableLobbies.sort((a, b) => a.players.length - b.players.length);
-            availableLobby = availableLobbies.find((server) => (server.players.length + server.connectingPlayers.length) < config.lobbyMaxPlayers);
+            availableLobbies.sort((a, b) => pcount(a) - pcount(b));
+            availableLobby = availableLobbies.find((server) => pcount(server) < config.lobbyMaxPlayers);
         }
 
         if (availableLobby) availableLobby.playerConnecting(playerUuid);
