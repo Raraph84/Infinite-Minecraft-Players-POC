@@ -13,7 +13,9 @@ const spawn = (i) => {
         host: "172.17.0.1",
         port: 25565,
         version: "1.12.2",
-        checkTimeoutInterval: 5 * 60 * 1000
+        checkTimeoutInterval: 5 * 60 * 1000,
+        logErrors: false,
+        viewDistance: "tiny"
     });
 
     let moveInterval;
@@ -37,12 +39,12 @@ const spawn = (i) => {
     bot.on("end", () => {
         clearInterval(moveInterval);
         clearTimeout(playTimeout);
+        setTimeout(() => spawn(i), 5 * 1000);
         console.log(`${username} has disconnected.`);
     });
 
     bot.on("kicked", (reason) => {
         console.log(`${username} was kicked for : ${reason}`);
-        setTimeout(() => spawn(i), 5 * 1000);
     });
 
     bot.on("error", (error) => {
