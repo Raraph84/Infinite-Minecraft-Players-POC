@@ -1,15 +1,16 @@
 const child_process = require("child_process");
 
-if (process.argv.length < 4) {
-    console.log("Usage: node index.js <count> <delay>");
+if (process.argv.length < 5) {
+    console.log("Usage: node index.js <count> <delay> <start>");
     process.exit(1);
 }
 
 const count = parseInt(process.argv[2]);
 const delay = parseInt(process.argv[3]);
+const start = parseInt(process.argv[4]);
 
 const spawn = (from, to, delay) => {
-    const proc = child_process.spawn("node", ["bots.js", from, to, delay]);
+    const proc = child_process.spawn("node", ["bots.js", start + from, start + to, delay]);
     proc.stdout.pipe(process.stdout);
     proc.stderr.pipe(process.stderr);
 };
