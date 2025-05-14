@@ -1,5 +1,5 @@
 const { promises: fs, existsSync } = require("fs");
-const { TaskManager, WebSocketServer, HttpServer } = require("raraph84-lib");
+const { WebSocketServer, HttpServer } = require("raraph84-lib");
 const path = require("path");
 const Dockerode = require("dockerode");
 const DockerEventListener = require("./src/DockerEventListener");
@@ -8,69 +8,50 @@ const config = require("./config.json");
 
 require("dotenv").config();
 
-const tasks = new TaskManager();
+(async () => {
 
-tasks.addTask(async (resolve) => {
     const serversDir = path.resolve(config.serversDir);
     if (!existsSync(serversDir))
         await fs.mkdir(serversDir);
-    resolve();
-}, (resolve) => resolve());
 
-const docker = new Dockerode();
+    const docker = new Dockerode();
 
-tasks.addTask(async (resolve, reject) => {
-    console.log("Pulling openjdk:8 Docker image...");
-    docker.modem.followProgress(await docker.pull("openjdk:8"), (error) => {
-        if (error) {
-            console.log("Cannot pull openjdk:8 Docker image - " + error);
-            reject();
-        } else {
-            console.log("Pulled openjdk:8 Docker image.");
-            resolve();
-        }
+    await new Promise(async (resolve) => {
+        console.log("Pulling openjdk:8 Docker image...");
+        docker.modem.followProgress(await docker.pull("openjdk:8"), (error) => {
+            if (error)
+                console.log("Cannot pull openjdk:8 Docker image - " + error);
+            else {
+                console.log("Pulled openjdk:8 Docker image.");
+                resolve();
+            }
+        });
     });
-}, (resolve) => resolve());
 
-const dockerEvents = new DockerEventListener(docker);
-tasks.addTask(async (resolve) => {
-    console.log("Connecting to Docker events...");
-    await dockerEvents.connect();
+    const dockerEvents = new DockerEventListener(docker);
     dockerEvents.on("disconnected", () => {
         console.log("Disconnected from Docker events, exiting.");
         process.exit(1);
     });
-    console.log("Connected to Docker events.");
-    resolve();
-}, (resolve) => { dockerEvents.removeAllListeners("disconnected"); dockerEvents.disconnect().then(() => resolve()); });
 
-const gateway = new WebSocketServer();
-tasks.addTask(async (resolve, reject) => {
+    console.log("Connecting to Docker events...");
+    await dockerEvents.connect();
+    console.log("Connected to Docker events.");
+
+    const api = new HttpServer();
+    const gateway = new WebSocketServer();
+    const servers = new Servers(docker, dockerEvents, gateway);
+
     console.log("Starting the API...");
     try {
+        await require("./src/api").start(api, gateway, servers);
         await require("./src/gateway").start(gateway, servers);
     } catch (error) {
-        console.log("Cannot start the gateway - " + error);
-        reject();
-        return;
-    }
-    resolve();
-}, (resolve) => require("./src/gateway").stop().then(() => resolve()));
-
-const api = new HttpServer();
-tasks.addTask(async (resolve, reject) => {
-    try {
-        await require("./src/api").start(api, gateway, servers);
-    } catch (error) {
-        console.log("Cannot start the API - " + error);
-        reject();
+        console.log("Cannot start the API/gateway - " + error);
         return;
     }
     console.log("Started the API.");
-    resolve();
-}, (resolve) => require("./src/api").stop().then(() => resolve()));
 
-const servers = new Servers(docker, dockerEvents, gateway);
-tasks.addTask((resolve) => servers.start().then(() => resolve()), (resolve) => resolve());
+    servers.start();
 
-tasks.run();
+})();
