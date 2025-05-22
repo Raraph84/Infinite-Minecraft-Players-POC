@@ -1,10 +1,9 @@
 /**
- * @param {object} message 
- * @param {import("raraph84-lib/src/WebSocketClient")} client 
- * @param {import("../Servers")} servers 
+ * @param {object} message
+ * @param {import("raraph84-lib/src/WebSocketClient")} client
+ * @param {import("../Servers")} servers
  */
 module.exports.run = async (message, client, servers) => {
-
     if (typeof message.token === "undefined") {
         client.close("Missing token");
         return;
@@ -36,7 +35,6 @@ module.exports.run = async (message, client, servers) => {
     }
 
     if (typeof message.server === "string") {
-
         let server;
         if (message.server === servers.proxy.name) server = servers.proxy;
         else server = servers.servers.find((server) => server.name === message.server);
@@ -46,8 +44,7 @@ module.exports.run = async (message, client, servers) => {
             return;
         }
 
-        if (server.gatewayClient)
-            server.gatewayClient.close("Connected from another client");
+        if (server.gatewayClient) server.gatewayClient.close("Connected from another client");
 
         client.infos.serverName = server.name;
         server.gatewayConnected(client);

@@ -25,5 +25,4 @@ for (let i = 0; i < count; i++) {
     }
 }
 
-for (let i = 0; i < procs.length; i++)
-    setTimeout(() => spawn(i * 10 + 1, i * 10 + procs[i], delay), i * 10 * delay);
+for (let i = 0; i < procs.length; i++) setTimeout(() => spawn(i * 10 + 1, i * 10 + procs[i], delay), i * 10 * delay);

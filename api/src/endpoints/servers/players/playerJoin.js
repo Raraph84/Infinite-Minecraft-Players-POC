@@ -1,9 +1,8 @@
 /**
- * @param {import("raraph84-lib/src/Request")} request 
- * @param {import("../../../Servers")} servers 
+ * @param {import("raraph84-lib/src/Request")} request
+ * @param {import("../../../Servers")} servers
  */
 module.exports.run = async (request, servers) => {
-
     if (!request.jsonBody) {
         request.end(400, "Invalid JSON");
         return;
@@ -29,7 +28,9 @@ module.exports.run = async (request, servers) => {
         return;
     }
 
-    const server = servers.servers.find((server) => server.name.toLowerCase() === request.urlParams.serverName.toLowerCase());
+    const server = servers.servers.find(
+        (server) => server.name.toLowerCase() === request.urlParams.serverName.toLowerCase()
+    );
     if (!server) {
         request.end(400, "This server does not exist");
         return;
