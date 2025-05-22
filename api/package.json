@@ -9,5 +9,24 @@
     "dockerode": "^4.0.2",
     "dotenv": "^16.4.5",
     "raraph84-lib": "^2.19.0"
+  },
+  "devDependencies": {
+    "prettier": "^3.5.3"
+  },
+  "prettier": {
+    "tabWidth": 4,
+    "trailingComma": "none",
+    "printWidth": 120,
+    "overrides": [
+      {
+        "files": [
+          "package.json",
+          "package-lock.json"
+        ],
+        "options": {
+          "tabWidth": 2
+        }
+      }
+    ]
   }
 }

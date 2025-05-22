@@ -7,5 +7,24 @@
   "license": "ISC",
   "dependencies": {
     "mineflayer": "^4.27.0"
+  },
+  "prettier": {
+    "tabWidth": 4,
+    "trailingComma": "none",
+    "printWidth": 120,
+    "overrides": [
+      {
+        "files": [
+          "package.json",
+          "package-lock.json"
+        ],
+        "options": {
+          "tabWidth": 2
+        }
+      }
+    ]
+  },
+  "devDependencies": {
+    "prettier": "^3.5.3"
   }
 }
