@@ -237,7 +237,7 @@ class Proxy extends Container {
     }
 
     async start() {
-        await super.start(config.proxyMemory, "BungeeCord.jar", true);
+        await super.start(config.proxyMemory, "waterfall-1.21-589.jar", true);
     }
 
     async stop() {
