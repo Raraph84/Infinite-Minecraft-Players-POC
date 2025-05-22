@@ -4,13 +4,17 @@ const from = parseInt(process.argv[2]);
 const to = parseInt(process.argv[3]);
 const delay = parseInt(process.argv[4]);
 
+const host = "172.17.0.1";
+const playing = false;
+const moving = false;
+
 const spawn = (i) => {
     const username = "Crashtester" + i;
 
     const bot = createBot({
         username,
-        host: "172.17.0.1",
-        port: 25565,
+        host: host.split(":")[0],
+        port: host.split(":")[1] ?? 25565,
         version: "1.12.2",
         checkTimeoutInterval: 5 * 60 * 1000,
         logErrors: false,
@@ -29,7 +33,18 @@ const spawn = (i) => {
             bot.look(Math.round(Math.random() * 200 - 100), 0);
         }, 1000);
 
-        play();
+        if (playing) play();
+
+        if (!moving) {
+            setTimeout(() => {
+                clearInterval(moveInterval);
+                bot.setControlState("forward", false);
+                bot.setControlState("jump", false);
+                setTimeout(() => {
+                    bot.physicsEnabled = false;
+                }, 5 * 1000);
+            }, 30 * 1000);
+        }
     });
 
     bot.on("end", () => {
