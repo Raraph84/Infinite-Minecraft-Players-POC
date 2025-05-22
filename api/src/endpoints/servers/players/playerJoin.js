@@ -8,18 +8,8 @@ module.exports.run = async (request, servers) => {
         return;
     }
 
-    if (typeof request.jsonBody.uuid === "undefined") {
-        request.end(400, "Missing uuid");
-        return;
-    }
-
     if (typeof request.jsonBody.uuid !== "string") {
         request.end(400, "Uuid must be a string");
-        return;
-    }
-
-    if (typeof request.jsonBody.username === "undefined") {
-        request.end(400, "Missing username");
         return;
     }
 

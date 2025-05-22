@@ -35,13 +35,12 @@ const start = async (gateway, servers) => {
     });
 
     gateway.on("close", (/** @type {import("raraph84-lib/src/WebSocketClient")} */ client) => {
-        if (!client.infos.serverName) return;
-
-        let server;
-        if (client.infos.serverName === servers.proxy.name) server = servers.proxy;
-        else server = servers.servers.find((server) => server.name === client.infos.serverName);
-
-        server.gatewayDisconnected();
+        if (client.infos.type === "server") {
+            const server = servers.servers.find((server) => server.name === client.infos.serverName);
+            server.gatewayDisconnected(client);
+        } else if (client.infos.type === "proxy") {
+            servers.proxy.gatewayDisconnected(client);
+        }
     });
 
     heartbeatInterval = setInterval(() => {

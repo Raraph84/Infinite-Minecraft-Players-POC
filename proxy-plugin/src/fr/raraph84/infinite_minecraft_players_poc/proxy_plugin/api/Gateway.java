@@ -89,7 +89,7 @@ public class Gateway {
 
             JsonObject message = new JsonObject();
             message.addProperty("token", Config.getApiKey());
-            message.addProperty("server", "proxy");
+            message.addProperty("type", "proxy");
 
             state = State.CONNECTED;
             Gateway.send("LOGIN", message);
