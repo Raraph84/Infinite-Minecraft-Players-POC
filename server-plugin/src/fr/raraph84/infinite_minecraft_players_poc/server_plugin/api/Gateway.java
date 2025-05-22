@@ -84,6 +84,7 @@ public class Gateway {
 
             JsonObject message = new JsonObject();
             message.addProperty("token", Config.getApiKey());
+            message.addProperty("type", "server");
             message.addProperty("server", Config.getServerName());
 
             state = State.CONNECTED;

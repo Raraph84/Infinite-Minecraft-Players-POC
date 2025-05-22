@@ -16,11 +16,6 @@ module.exports.run = async (request, servers) => {
         return;
     }
 
-    if (typeof request.jsonBody.serverName === "undefined") {
-        request.end(400, "Missing server name");
-        return;
-    }
-
     if (typeof request.jsonBody.serverName !== "string") {
         request.end(400, "Server name must be a string");
         return;

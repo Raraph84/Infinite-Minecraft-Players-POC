@@ -4,8 +4,8 @@
  * @param {import("../Servers")} servers
  */
 module.exports.run = async (message, client, servers) => {
-    if (typeof message.token === "undefined") {
-        client.close("Missing token");
+    if (client.infos.logged) {
+        client.close("Already logged");
         return;
     }
 
@@ -14,42 +14,40 @@ module.exports.run = async (message, client, servers) => {
         return;
     }
 
-    if (typeof message.server === "undefined") {
-        client.close("Missing server");
-        return;
-    }
-
-    if (typeof message.server !== "string" && typeof message.server !== null) {
-        client.close("Server must be a string or null");
-        return;
-    }
-
-    if (client.infos.logged) {
-        client.close("Already logged");
-        return;
-    }
-
     if (message.token !== process.env.API_KEY) {
         client.close("Invalid token");
         return;
     }
 
-    if (typeof message.server === "string") {
-        let server;
-        if (message.server === servers.proxy.name) server = servers.proxy;
-        else server = servers.servers.find((server) => server.name === message.server);
+    if (typeof message.type !== "string") {
+        client.close("Type must be a string");
+        return;
+    }
 
+    if (message.type !== "server" && message.type !== "proxy") {
+        client.close("Type must be server or proxy");
+        return;
+    }
+
+    if (message.type === "server") {
+        if (typeof message.server !== "string") {
+            client.close("Server must be a string");
+            return;
+        }
+
+        const server = servers.servers.find((server) => server.name === message.server);
         if (!server) {
             client.close("Unknown server");
             return;
         }
 
-        if (server.gatewayClient) server.gatewayClient.close("Connected from another client");
-
         client.infos.serverName = server.name;
         server.gatewayConnected(client);
+    } else if (message.type === "proxy") {
+        servers.proxy.gatewayConnected(client);
     }
 
+    client.infos.type = message.type;
     client.infos.logged = true;
     client.emitEvent("LOGGED");
 };
