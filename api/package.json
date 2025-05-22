@@ -6,9 +6,9 @@
   "author": "Raraph84",
   "license": "ISC",
   "dependencies": {
-    "dockerode": "^4.0.2",
-    "dotenv": "^16.4.5",
-    "raraph84-lib": "^2.19.0"
+    "dockerode": "^4.0.6",
+    "dotenv": "^16.5.0",
+    "raraph84-lib": "^2.20.0"
   },
   "devDependencies": {
     "prettier": "^3.5.3"

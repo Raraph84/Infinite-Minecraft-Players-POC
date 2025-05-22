@@ -6,7 +6,10 @@
   "author": "Raraph84",
   "license": "ISC",
   "dependencies": {
-    "mineflayer": "^4.27.0"
+    "mineflayer": "^4.29.0"
+  },
+  "devDependencies": {
+    "prettier": "^3.5.3"
   },
   "prettier": {
     "tabWidth": 4,
@@ -23,8 +26,5 @@
         }
       }
     ]
-  },
-  "devDependencies": {
-    "prettier": "^3.5.3"
   }
 }
