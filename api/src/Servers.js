@@ -197,11 +197,15 @@ class Servers {
 
         console.log("Starting not started servers...");
         if (this.proxy.state !== "started") this.proxy.start();
-        this.scaleLobbies();
-        this.scaleGames();
+        if (config.lobbyServersScalingInterval) {
+            this.scaleLobbies();
+            setInterval(() => this.scaleLobbies(), config.lobbyServersScalingInterval);
+        }
 
-        setInterval(() => this.scaleLobbies(), config.lobbyServersScalingInterval);
-        setInterval(() => this.scaleGames(), config.gameServersScalingInterval);
+        if (config.gameServersScalingInterval) {
+            this.scaleGames();
+            setInterval(() => this.scaleGames(), config.gameServersScalingInterval);
+        }
     }
 
     async scaleLobbies() {
