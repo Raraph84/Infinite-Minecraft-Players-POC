@@ -5,7 +5,6 @@ const to = parseInt(process.argv[3]);
 const delay = parseInt(process.argv[4]);
 
 const spawn = (i) => {
-
     const username = "Crashtester" + i;
 
     const bot = createBot({
@@ -22,15 +21,12 @@ const spawn = (i) => {
     let playTimeout;
 
     bot.on("login", () => {
-
         console.log(`${username} has joined.`);
 
         moveInterval = setInterval(() => {
-
             bot.setControlState("forward", true);
             bot.setControlState("jump", true);
             bot.look(Math.round(Math.random() * 200 - 100), 0);
-
         }, 1000);
 
         play();
@@ -52,22 +48,23 @@ const spawn = (i) => {
     });
 
     let onLobby = true;
-    const play = () => playTimeout = setTimeout(() => {
+    const play = () =>
+        (playTimeout = setTimeout(
+            () => {
+                if (onLobby) {
+                    onLobby = false;
+                    bot.chat("/play");
+                    console.log(`${username} is playing.`);
+                } else {
+                    onLobby = true;
+                    bot.chat("/lobby");
+                    console.log(`${username} is in the lobby.`);
+                }
 
-        if (onLobby) {
-            onLobby = false;
-            bot.chat("/play");
-            console.log(`${username} is playing.`);
-        } else {
-            onLobby = true;
-            bot.chat("/lobby");
-            console.log(`${username} is in the lobby.`);
-        }
+                play();
+            },
+            Math.round(15 * 1000 + Math.random() * 2 * 60 * 1000)
+        ));
+};
 
-        play();
-
-    }, Math.round(15 * 1000 + Math.random() * 2 * 60 * 1000));
-}
-
-for (let i = 0; i <= to - from; i++)
-    setTimeout(() => spawn(from + i), i * delay);
+for (let i = 0; i <= to - from; i++) setTimeout(() => spawn(from + i), i * delay);

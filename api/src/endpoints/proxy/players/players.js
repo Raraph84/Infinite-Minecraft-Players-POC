@@ -1,9 +1,8 @@
 /**
- * @param {import("raraph84-lib/src/Request")} request 
- * @param {import("../../../Servers")} servers 
+ * @param {import("raraph84-lib/src/Request")} request
+ * @param {import("../../../Servers")} servers
  */
 module.exports.run = async (request, servers) => {
-
     request.end(200, { players: servers.proxy.players });
 };
 

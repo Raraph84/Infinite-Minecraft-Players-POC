@@ -2,14 +2,12 @@ const { PassThrough } = require("stream");
 const EventEmitter = require("events");
 
 module.exports = class DockerEventListener extends EventEmitter {
-
     #stream = null;
 
     /**
-     * @param {import("dockerode")} docker 
+     * @param {import("dockerode")} docker
      */
     constructor(docker) {
-
         super();
 
         this.docker = docker;
@@ -24,13 +22,11 @@ module.exports = class DockerEventListener extends EventEmitter {
     }
 
     connect() {
-
         if (this.state !== "disconnected") throw new Error("Not disconnected");
         this._setState("connecting");
 
         return new Promise((resolve, reject) => {
             this.docker.getEvents((error, stream) => {
-
                 if (error) {
                     this._setState("disconnected");
                     reject(error);
@@ -41,7 +37,6 @@ module.exports = class DockerEventListener extends EventEmitter {
 
                 const parser = new PassThrough();
                 parser.on("data", (data) => {
-
                     let event;
                     try {
                         event = JSON.parse(data.toString());
@@ -72,4 +67,4 @@ module.exports = class DockerEventListener extends EventEmitter {
             this.#stream.destroy();
         });
     }
-}
+};
