@@ -129,8 +129,12 @@ class Container extends EventEmitter {
 
         this.servers.dockerEvents.removeListener("rawEvent", this._bindDockerEventHandler);
 
+        const restart = this.state !== "stopping";
+
         this._setState("stopped");
         console.log("Container " + this.name + " stopped.");
+
+        if (restart) this.start();
     }
 
     /**
