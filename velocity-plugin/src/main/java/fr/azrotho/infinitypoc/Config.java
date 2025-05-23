@@ -13,15 +13,8 @@ public class Config {
     public static String apiHost;
     public static String apiKey;
 
-    public void init() {
+    public static void init() {
         jsonFile = InfinityPlugin.getInstance().getDataDirectory().resolve("config.json").toFile();
-        if (!jsonFile.exists()) {
-            try {
-                jsonFile.createNewFile();
-            } catch (IOException e) {
-                throw new RuntimeException("Could not create config file", e);
-            }
-        }
 
         try {
             String json = new String(Files.readAllBytes(jsonFile.toPath()));

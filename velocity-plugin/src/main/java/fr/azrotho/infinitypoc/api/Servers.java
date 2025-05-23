@@ -2,6 +2,7 @@ package fr.azrotho.infinitypoc.api;
 
 import com.google.gson.JsonObject;
 import com.velocitypowered.api.proxy.ProxyServer;
+import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.proxy.server.ServerInfo;
 import fr.azrotho.infinitypoc.InfinityPlugin;
 
@@ -17,8 +18,10 @@ public class Servers {
 
         ProxyServer proxy = InfinityPlugin.getInstance().getServer();
 
-        proxy.getAllServers().clear();
-        Servers.getServers().forEach((server) -> proxy.getAllServers().add(proxy.registerServer(new ServerInfo(server.getName(), new InetSocketAddress("172.17.0.1", server.getPort())))));
+        for (RegisteredServer server : proxy.getAllServers())
+            proxy.unregisterServer(server.getServerInfo());
+        for (Server server : Servers.getServers())
+            proxy.registerServer(new ServerInfo(server.getName(), new InetSocketAddress("172.17.0.1", server.getPort())));
     }
 
     public static Server getServer(String name) {
@@ -31,22 +34,20 @@ public class Servers {
 
     public static void onServerAdded(Server server) {
 
-        if (getServer(server.getName()) != null)
-            throw new RuntimeException("This server already exists");
+        if (getServer(server.getName()) != null) throw new RuntimeException("This server already exists");
 
         servers.add(server);
 
         ProxyServer proxy = InfinityPlugin.getInstance().getServer();
-        proxy.getAllServers().add(proxy.registerServer(new ServerInfo(server.getName(), new InetSocketAddress("172.17.0.1", server.getPort()))));
+        proxy.registerServer(new ServerInfo(server.getName(), new InetSocketAddress("172.17.0.1", server.getPort())));
     }
 
     public static void onServerRemoved(Server server) {
 
-        if (getServer(server.getName()) == null)
-            throw new RuntimeException("This server does not exist");
+        if (getServer(server.getName()) == null) throw new RuntimeException("This server does not exist");
 
         ProxyServer proxy = InfinityPlugin.getInstance().getServer();
-        proxy.getAllServers().removeIf((serverInfo) -> serverInfo.getServerInfo().getName().equals(server.getName()));
+        proxy.unregisterServer(proxy.getServer(server.getName()).get().getServerInfo());
 
         servers.remove(server);
     }
