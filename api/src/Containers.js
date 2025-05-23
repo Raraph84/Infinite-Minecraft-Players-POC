@@ -82,7 +82,7 @@ class Container extends EventEmitter {
             Tty: true,
             OpenStdin: true,
             Cmd: ["java", "-Xmx" + memory * 1024 + "M", "-jar", file],
-            Image: "openjdk:8",
+            Image: "openjdk:21",
             WorkingDir: "/home/server",
             HostConfig: {
                 PortBindings: {
@@ -241,7 +241,7 @@ class Proxy extends Container {
     }
 
     async start() {
-        await super.start(config.proxyMemory, "waterfall-1.21-589.jar", true);
+        await super.start(config.proxyMemory, "velocity.jar", true);
     }
 
     async stop() {
