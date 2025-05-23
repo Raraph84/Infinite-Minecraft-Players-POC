@@ -1,0 +1,10 @@
+{
+    "apiHost": "192.168.1.103:8080",
+    "nodeName": "dedicated03",
+    "serversDir": "../servers",
+    "serversStartingPort": 25000,
+    "lobbyServerTemplateDir": "../server-template",
+    "lobbyServerMemory": 4,
+    "gameServerTemplateDir": "../server-template",
+    "gameServerMemory": 1
+}
