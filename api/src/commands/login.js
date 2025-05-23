@@ -24,12 +24,26 @@ module.exports.run = async (message, client, servers) => {
         return;
     }
 
-    if (message.type !== "server" && message.type !== "proxy") {
-        client.close("Type must be server or proxy");
+    if (message.type !== "node" && message.type !== "server" && message.type !== "proxy") {
+        client.close("Type must be node, server or proxy");
         return;
     }
 
-    if (message.type === "server") {
+    if (message.type === "node") {
+        if (typeof message.node !== "string") {
+            client.close("Node must be a string");
+            return;
+        }
+
+        const node = servers.nodes.find((node) => node.name === message.node);
+        if (!node) {
+            client.close("Unknown node");
+            return;
+        }
+
+        client.infos.nodeName = node.name;
+        node.gatewayConnected(client);
+    } else if (message.type === "server") {
         if (typeof message.server !== "string") {
             client.close("Server must be a string");
             return;
