@@ -11,9 +11,22 @@
     "lobbyPlayers": 50,
     "lobbyMaxPlayers": 100,
     "gameServerTemplateDir": "../server-template",
-    "gameServersScalingInterval": 30000,
+    "gameServersScalingInterval": 0,
     "gameServerMemory": 1,
     "gamePlayers": 16,
-    "maxMemory": 0,
+    "nodes": [
+        {
+            "name": "dedicated01",
+            "maxMemory": 96
+        },
+        {
+            "name": "dedicated02",
+            "maxMemory": 96
+        },
+        {
+            "name": "dedicated03",
+            "maxMemory": 96
+        }
+    ],
     "stateFile": "./state.json"
 }

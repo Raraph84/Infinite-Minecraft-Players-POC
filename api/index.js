@@ -3,6 +3,7 @@ const { WebSocketServer, HttpServer } = require("raraph84-lib");
 const path = require("path");
 const Dockerode = require("dockerode");
 const DockerEventListener = require("./src/DockerEventListener");
+const Node = require("./src/Node");
 const Servers = require("./src/Servers");
 const config = require("./config.json");
 
@@ -37,7 +38,9 @@ require("dotenv").config();
 
     const api = new HttpServer();
     const gateway = new WebSocketServer();
-    const servers = new Servers(docker, dockerEvents, gateway);
+
+    const nodes = config.nodes.map((node) => new Node(node.name, gateway));
+    const servers = new Servers(docker, dockerEvents, gateway, nodes);
 
     console.log("Starting the API...");
     try {

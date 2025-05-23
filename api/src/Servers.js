@@ -10,11 +10,13 @@ class Servers {
      * @param {import("dockerode")} docker
      * @param {import("./DockerEventListener")} dockerEvents
      * @param {import("raraph84-lib/src/WebSocketServer")} gateway
+     * @param {import("./Node")[]} nodes
      */
-    constructor(docker, dockerEvents, gateway) {
+    constructor(docker, dockerEvents, gateway, nodes) {
         this.docker = docker;
         this.dockerEvents = dockerEvents;
         this.gateway = gateway;
+        this.nodes = nodes;
 
         this.proxy = new Proxy(this);
         /** @type {import("./Containers").Server[]} */
