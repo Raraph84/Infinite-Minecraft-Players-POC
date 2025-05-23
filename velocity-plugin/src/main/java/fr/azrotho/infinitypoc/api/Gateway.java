@@ -6,7 +6,6 @@ import com.google.gson.JsonObject;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
-import com.velocitypowered.api.proxy.server.ServerInfo;
 import com.velocitypowered.api.scheduler.ScheduledTask;
 import fr.azrotho.infinitypoc.Config;
 import fr.azrotho.infinitypoc.InfinityPlugin;
@@ -136,7 +135,7 @@ public class Gateway {
                     }
                     Player player = Oplayer.get();
                     Optional<RegisteredServer> oserver = proxy.getServer(serverName);
-                    if(oserver.isEmpty()) {
+                    if (oserver.isEmpty()) {
                         InfinityPlugin.getInstance().getLogger().warning("Server " + serverName + " not found.");
                         return;
                     }
@@ -162,8 +161,9 @@ public class Gateway {
                 InfinityPlugin.getInstance().getLogger().info("Disconnected from the gateway, reconnecting in 3 seconds... " + reason + " (" + code + ")");
 
                 reconnectTask = InfinityPlugin.getInstance().getServer().getScheduler().buildTask(InfinityPlugin.getInstance(), () -> {
-                    state = State.DISCONNECTED;
-                    Gateway.connect();})
+                        state = State.DISCONNECTED;
+                        Gateway.connect();
+                    })
                     .delay(3L, TimeUnit.SECONDS)
                     .schedule();
 
