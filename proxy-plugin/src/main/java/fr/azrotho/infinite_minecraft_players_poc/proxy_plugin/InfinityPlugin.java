@@ -15,7 +15,7 @@ import fr.azrotho.infinite_minecraft_players_poc.proxy_plugin.listeners.ProxyPin
 import java.nio.file.Path;
 import java.util.logging.Logger;
 
-@Plugin(id= "Infinite-Minecraft-Players-POC-Proxy-Plugin", name= "InfinityPoc", version = "1.0-SNAPSHOT", description = "uwu", authors = {"Azrotho"}, url = "https://azrotho.fr")
+@Plugin(id= "infinite-minecraft-players-poc-proxy-plugin", name= "Infinite-Minecraft-Players-POC-Proxy-Plugin", version = "1.0-SNAPSHOT", authors = {"Azrotho"}, url = "https://github.com/Raraph84/Infinite-Minecraft-Players-POC")
 
 public class InfinityPlugin {
     private final ProxyServer server;
@@ -40,13 +40,13 @@ public class InfinityPlugin {
 
         server.getEventManager().register(this, new PlayerJoinQuitListener());
         server.getEventManager().register(this, new ProxyPingListener());
-        logger.info("Plugin loaded successfully!");
+        logger.info(getServer().getPluginManager().fromInstance(this).get().getDescription().getName().get() + " loaded successfully!");
     }
 
     @Subscribe
     public void onProxyShutdown(ProxyShutdownEvent event) {
         Gateway.disconnect();
-        logger.info("Plugin unloaded successfully!");
+        logger.info(getServer().getPluginManager().fromInstance(this).get().getDescription().getName().get() + " unloaded successfully!");
     }
 
     public static InfinityPlugin getInstance() {
@@ -64,6 +64,4 @@ public class InfinityPlugin {
     public Path getDataDirectory() {
         return dataDirectory;
     }
-
-
 }
