@@ -1,24 +1,27 @@
-package fr.raraph84.infinite_minecraft_players_poc.proxy_plugin.api;
+package fr.azrotho.infinite_minecraft_players_poc.proxy_plugin.api;
 
 import com.google.gson.JsonObject;
-import fr.raraph84.infinite_minecraft_players_poc.proxy_plugin.MinecraftInfinitePlayersPOCProxyPlugin;
-import net.md_5.bungee.api.ProxyServer;
+import com.velocitypowered.api.proxy.ProxyServer;
+import com.velocitypowered.api.proxy.server.RegisteredServer;
+import com.velocitypowered.api.proxy.server.ServerInfo;
+import fr.azrotho.infinite_minecraft_players_poc.proxy_plugin.InfinityPlugin;
 
 import java.net.InetSocketAddress;
 import java.util.List;
 
 public class Servers {
-
     private static List<Server> servers;
 
     public static void init() {
 
         servers = API.getServers();
 
-        ProxyServer proxy = MinecraftInfinitePlayersPOCProxyPlugin.getInstance().getProxy();
+        ProxyServer proxy = InfinityPlugin.getInstance().getServer();
 
-        proxy.getServers().clear();
-        Servers.getServers().forEach((server) -> proxy.getServers().put(server.getName(), proxy.constructServerInfo(server.getName(), new InetSocketAddress("172.17.0.1", server.getPort()), "", false)));
+        for (RegisteredServer server : proxy.getAllServers())
+            proxy.unregisterServer(server.getServerInfo());
+        for (Server server : Servers.getServers())
+            proxy.registerServer(new ServerInfo(server.getName(), new InetSocketAddress("172.17.0.1", server.getPort())));
     }
 
     public static Server getServer(String name) {
@@ -31,22 +34,20 @@ public class Servers {
 
     public static void onServerAdded(Server server) {
 
-        if (getServer(server.getName()) != null)
-            throw new RuntimeException("This server already exists");
+        if (getServer(server.getName()) != null) throw new RuntimeException("This server already exists");
 
         servers.add(server);
 
-        ProxyServer proxy = MinecraftInfinitePlayersPOCProxyPlugin.getInstance().getProxy();
-        proxy.getServers().put(server.getName(), proxy.constructServerInfo(server.getName(), new InetSocketAddress("172.17.0.1", server.getPort()), "", false));
+        ProxyServer proxy = InfinityPlugin.getInstance().getServer();
+        proxy.registerServer(new ServerInfo(server.getName(), new InetSocketAddress("172.17.0.1", server.getPort())));
     }
 
     public static void onServerRemoved(Server server) {
 
-        if (getServer(server.getName()) == null)
-            throw new RuntimeException("This server does not exist");
+        if (getServer(server.getName()) == null) throw new RuntimeException("This server does not exist");
 
-        ProxyServer proxy = MinecraftInfinitePlayersPOCProxyPlugin.getInstance().getProxy();
-        proxy.getServers().remove(server.getName());
+        ProxyServer proxy = InfinityPlugin.getInstance().getServer();
+        proxy.unregisterServer(proxy.getServer(server.getName()).get().getServerInfo());
 
         servers.remove(server);
     }

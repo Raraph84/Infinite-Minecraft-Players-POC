@@ -1,4 +1,4 @@
-package fr.raraph84.infinite_minecraft_players_poc.proxy_plugin.utils;
+package fr.azrotho.infinite_minecraft_players_poc.proxy_plugin.utils;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -16,7 +16,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class HttpRequest {
-
     private final String url;
     private String method = "GET";
     private final Map<String, String> headers = new HashMap<>();
