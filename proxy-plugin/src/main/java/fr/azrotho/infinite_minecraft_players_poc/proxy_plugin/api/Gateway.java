@@ -130,14 +130,12 @@ public class Gateway {
                     ProxyServer proxy = InfinityPlugin.getInstance().getServer();
                     Optional<Player> Oplayer = proxy.getPlayer(playerUuid);
                     if (Oplayer.isEmpty()) {
-                        InfinityPlugin.getInstance().getLogger().warning("Player " + playerUuid + " not found.");
-                        return;
+                        throw new RuntimeException("Player " + playerUuid + " not found.");
                     }
                     Player player = Oplayer.get();
                     Optional<RegisteredServer> oserver = proxy.getServer(serverName);
                     if (oserver.isEmpty()) {
-                        InfinityPlugin.getInstance().getLogger().warning("Server " + serverName + " not found.");
-                        return;
+                        throw new RuntimeException("Server " + serverName + " not found.");
                     }
                     RegisteredServer server = oserver.get();
 
