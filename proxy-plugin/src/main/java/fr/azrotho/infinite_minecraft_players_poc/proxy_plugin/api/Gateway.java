@@ -1,4 +1,4 @@
-package fr.azrotho.infinitypoc.api;
+package fr.azrotho.infinite_minecraft_players_poc.proxy_plugin.api;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -7,8 +7,8 @@ import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.scheduler.ScheduledTask;
-import fr.azrotho.infinitypoc.Config;
-import fr.azrotho.infinitypoc.InfinityPlugin;
+import fr.azrotho.infinite_minecraft_players_poc.proxy_plugin.Config;
+import fr.azrotho.infinite_minecraft_players_poc.proxy_plugin.InfinityPlugin;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
 

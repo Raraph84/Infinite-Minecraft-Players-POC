@@ -1,4 +1,4 @@
-package fr.azrotho.infinitypoc.utils;
+package fr.azrotho.infinite_minecraft_players_poc.proxy_plugin.utils;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;

@@ -1,9 +1,9 @@
-package fr.azrotho.infinitypoc.listeners;
+package fr.azrotho.infinite_minecraft_players_poc.proxy_plugin.listeners;
 
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.proxy.ProxyPingEvent;
 import com.velocitypowered.api.proxy.server.ServerPing;
-import fr.azrotho.infinitypoc.api.Servers;
+import fr.azrotho.infinite_minecraft_players_poc.proxy_plugin.api.Servers;
 
 public class ProxyPingListener {
     @Subscribe

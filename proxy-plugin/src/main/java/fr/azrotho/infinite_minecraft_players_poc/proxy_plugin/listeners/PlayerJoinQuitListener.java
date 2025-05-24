@@ -1,10 +1,10 @@
-package fr.azrotho.infinitypoc.listeners;
+package fr.azrotho.infinite_minecraft_players_poc.proxy_plugin.listeners;
 
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.DisconnectEvent;
 import com.velocitypowered.api.event.player.PlayerChooseInitialServerEvent;
-import fr.azrotho.infinitypoc.InfinityPlugin;
-import fr.azrotho.infinitypoc.api.API;
+import fr.azrotho.infinite_minecraft_players_poc.proxy_plugin.InfinityPlugin;
+import fr.azrotho.infinite_minecraft_players_poc.proxy_plugin.api.API;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextColor;
 

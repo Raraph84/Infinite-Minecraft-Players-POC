@@ -1,9 +1,9 @@
-package fr.raraph84.infinite_minecraft_players_poc.proxy_plugin.api;
+package fr.azrotho.infinite_minecraft_players_poc.proxy_plugin.api;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import fr.raraph84.infinite_minecraft_players_poc.proxy_plugin.Config;
-import fr.raraph84.infinite_minecraft_players_poc.proxy_plugin.utils.HttpRequest;
+import fr.azrotho.infinite_minecraft_players_poc.proxy_plugin.Config;
+import fr.azrotho.infinite_minecraft_players_poc.proxy_plugin.utils.HttpRequest;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -14,7 +14,7 @@ public class API {
 
     public static List<Servers.Server> getServers() {
 
-        HttpRequest req = new HttpRequest(Config.getApiHost() + "/servers");
+        HttpRequest req = new HttpRequest(Config.apiHost + "/servers");
         JsonObject res = sendRequest(req);
 
         List<Servers.Server> servers = new ArrayList<>();
@@ -30,7 +30,7 @@ public class API {
         body.addProperty("uuid", uuid.toString());
         body.addProperty("username", username);
 
-        HttpRequest req = new HttpRequest(Config.getApiHost() + "/proxy/players").setMethod("POST").setBody(body);
+        HttpRequest req = new HttpRequest(Config.apiHost + "/proxy/players").setMethod("POST").setBody(body);
         JsonObject res = sendRequest(req, "No server available");
 
         return res.get("serverName").getAsString();
@@ -38,17 +38,17 @@ public class API {
 
     public static void proxyPlayerQuit(UUID uuid) {
 
-        HttpRequest req = new HttpRequest(Config.getApiHost() + "/proxy/players/" + uuid.toString()).setMethod("DELETE");
+        HttpRequest req = new HttpRequest(Config.apiHost + "/proxy/players/" + uuid.toString()).setMethod("DELETE");
         sendNoContentRequest(req, "This player is already disconnected");
     }
 
     public static String getGatewayUrl() {
-        return Config.getApiHost().replace("http", "ws") + "/gateway";
+        return Config.apiHost.replace("http", "ws") + "/gateway";
     }
 
     private static JsonObject sendRequest(HttpRequest req, String... errors) {
 
-        req.setHeader("Authorization", Config.getApiKey());
+        req.setHeader("Authorization", Config.apiKey);
 
         try {
             req.send();
@@ -66,7 +66,7 @@ public class API {
 
     private static void sendNoContentRequest(HttpRequest req, String... errors) {
 
-        req.setHeader("Authorization", Config.getApiKey());
+        req.setHeader("Authorization", Config.apiKey);
 
         try {
             req.send();
