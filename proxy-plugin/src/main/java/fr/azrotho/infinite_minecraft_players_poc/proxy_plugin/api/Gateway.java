@@ -1,24 +1,24 @@
-package fr.raraph84.infinite_minecraft_players_poc.proxy_plugin.api;
+package fr.azrotho.infinite_minecraft_players_poc.proxy_plugin.api;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
-import fr.raraph84.infinite_minecraft_players_poc.proxy_plugin.Config;
-import fr.raraph84.infinite_minecraft_players_poc.proxy_plugin.MinecraftInfinitePlayersPOCProxyPlugin;
-import net.md_5.bungee.api.ProxyServer;
-import net.md_5.bungee.api.config.ServerInfo;
-import net.md_5.bungee.api.connection.ProxiedPlayer;
-import net.md_5.bungee.api.scheduler.ScheduledTask;
+import com.velocitypowered.api.proxy.Player;
+import com.velocitypowered.api.proxy.ProxyServer;
+import com.velocitypowered.api.proxy.server.RegisteredServer;
+import com.velocitypowered.api.scheduler.ScheduledTask;
+import fr.azrotho.infinite_minecraft_players_poc.proxy_plugin.Config;
+import fr.azrotho.infinite_minecraft_players_poc.proxy_plugin.InfinityPlugin;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
 
 import java.net.URI;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 public class Gateway {
-
     private static Client gateway;
     private static State state = State.DISCONNECTED;
     private static CountDownLatch latch;
@@ -30,7 +30,7 @@ public class Gateway {
             throw new RuntimeException("The gateway is not disconnected.");
         state = State.CONNECTING;
 
-        MinecraftInfinitePlayersPOCProxyPlugin.getInstance().getLogger().info("Connecting to the gateway...");
+        InfinityPlugin.getInstance().getLogger().info("Connecting to the gateway...");
 
         latch = new CountDownLatch(1);
         gateway = new Client();
@@ -44,7 +44,7 @@ public class Gateway {
 
         if (state != State.CONNECTED) return;
 
-        MinecraftInfinitePlayersPOCProxyPlugin.getInstance().getLogger().info("Connected to the gateway.");
+        InfinityPlugin.getInstance().getLogger().info("Connected to the gateway.");
     }
 
     public static void disconnect() {
@@ -52,7 +52,7 @@ public class Gateway {
         if (state != State.CONNECTED && state != State.RECONNECTING)
             throw new RuntimeException("The gateway is not connected.");
 
-        MinecraftInfinitePlayersPOCProxyPlugin.getInstance().getLogger().info("Disconnecting from the gateway...");
+        InfinityPlugin.getInstance().getLogger().info("Disconnecting from the gateway...");
 
         if (state == State.RECONNECTING) {
             reconnectTask.cancel();
@@ -65,7 +65,7 @@ public class Gateway {
             }
         }
 
-        MinecraftInfinitePlayersPOCProxyPlugin.getInstance().getLogger().info("Disconnected from the gateway.");
+        InfinityPlugin.getInstance().getLogger().info("Disconnected from the gateway.");
     }
 
     public static void send(String command, JsonObject json) {
@@ -88,7 +88,7 @@ public class Gateway {
         public void onOpen(ServerHandshake serverHandshake) {
 
             JsonObject message = new JsonObject();
-            message.addProperty("token", Config.getApiKey());
+            message.addProperty("token", Config.apiKey);
             message.addProperty("type", "proxy");
 
             state = State.CONNECTED;
@@ -105,7 +105,7 @@ public class Gateway {
             switch (event) {
 
                 case "LOGGED":
-                    MinecraftInfinitePlayersPOCProxyPlugin.getInstance().getProxy().getPlayers().forEach((player) -> API.proxyPlayerJoin(player.getUniqueId(), player.getName()));
+                    InfinityPlugin.getInstance().getServer().getAllPlayers().forEach(player -> API.proxyPlayerJoin(player.getUniqueId(), player.getUsername()));
                     state = State.CONNECTED;
                     latch.countDown();
                     break;
@@ -127,11 +127,19 @@ public class Gateway {
                     UUID playerUuid = UUID.fromString(message.get("playerUuid").getAsString());
                     String serverName = message.get("serverName").getAsString();
 
-                    ProxyServer proxy = MinecraftInfinitePlayersPOCProxyPlugin.getInstance().getProxy();
-                    ProxiedPlayer player = proxy.getPlayer(playerUuid);
-                    ServerInfo server = proxy.getServerInfo(serverName);
+                    ProxyServer proxy = InfinityPlugin.getInstance().getServer();
+                    Optional<Player> Oplayer = proxy.getPlayer(playerUuid);
+                    if (Oplayer.isEmpty()) {
+                        throw new RuntimeException("Player " + playerUuid + " not found.");
+                    }
+                    Player player = Oplayer.get();
+                    Optional<RegisteredServer> oserver = proxy.getServer(serverName);
+                    if (oserver.isEmpty()) {
+                        throw new RuntimeException("Server " + serverName + " not found.");
+                    }
+                    RegisteredServer server = oserver.get();
 
-                    player.connect(server);
+                    player.createConnectionRequest(server).fireAndForget();
                     break;
                 }
             }
@@ -148,12 +156,14 @@ public class Gateway {
                 } else
                     state = State.RECONNECTING;
 
-                MinecraftInfinitePlayersPOCProxyPlugin.getInstance().getLogger().info("Disconnected from the gateway, reconnecting in 3 seconds... " + reason + " (" + code + ")");
+                InfinityPlugin.getInstance().getLogger().info("Disconnected from the gateway, reconnecting in 3 seconds... " + reason + " (" + code + ")");
 
-                reconnectTask = MinecraftInfinitePlayersPOCProxyPlugin.getInstance().getProxy().getScheduler().schedule(MinecraftInfinitePlayersPOCProxyPlugin.getInstance(), () -> {
-                    state = State.DISCONNECTED;
-                    Gateway.connect();
-                }, 3, TimeUnit.SECONDS);
+                reconnectTask = InfinityPlugin.getInstance().getServer().getScheduler().buildTask(InfinityPlugin.getInstance(), () -> {
+                        state = State.DISCONNECTED;
+                        Gateway.connect();
+                    })
+                    .delay(3L, TimeUnit.SECONDS)
+                    .schedule();
 
             } else if (state == State.DISCONNECTING)
                 state = State.DISCONNECTED;
