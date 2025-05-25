@@ -15,14 +15,13 @@ import fr.azrotho.infinite_minecraft_players_poc.proxy_plugin.listeners.ProxyPin
 import java.nio.file.Path;
 import java.util.logging.Logger;
 
-@Plugin(id= "infinite-minecraft-players-poc-proxy-plugin", name= "Infinite-Minecraft-Players-POC-Proxy-Plugin", version = "1.0-SNAPSHOT", authors = {"Azrotho"}, url = "https://github.com/Raraph84/Infinite-Minecraft-Players-POC")
+@Plugin(id = "infinite-minecraft-players-poc-proxy-plugin", name = "Infinite-Minecraft-Players-POC-Proxy-Plugin", version = "1.0-SNAPSHOT", authors = {"Azrotho"}, url = "https://github.com/Raraph84/Infinite-Minecraft-Players-POC")
 
 public class InfinityPlugin {
     private final ProxyServer server;
     private final Logger logger;
     private final Path dataDirectory;
     private static InfinityPlugin instance;
-
 
     @Inject
     public InfinityPlugin(ProxyServer server, Logger logger, @DataDirectory Path dataDirectory) {

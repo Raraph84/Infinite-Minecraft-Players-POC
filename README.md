@@ -10,8 +10,8 @@ This is not new, Hypixel (and others) have probably already done it
 -   A Linux server
 -   [Docker](https://docs.docker.com/engine/install/) installed
 
-The installation can be run with any user, but the same for each step, and will create files as root.  
-The installation will be in the `~/infinite-minecraft-players-poc/` dir.
+The installation can be run with any user, but the same for each step, and will create files as root  
+The installation will be in the `~/infinite-minecraft-players-poc/` dir
 
 ### Step 1 : Clone the repository
 
@@ -77,7 +77,7 @@ Open a terminal and run
 docker run -it --rm --init \
 --volume ~/infinite-minecraft-players-poc:/home/infinite-minecraft-players-poc \
 --workdir /home/infinite-minecraft-players-poc/bots \
-node index.js <player count> <delay between each player join>
+node index.js <player count> <delay between each player join> <first player number>
 ```
 
 For example, for 100 bots with 1 second delay between each join, run
@@ -86,7 +86,7 @@ For example, for 100 bots with 1 second delay between each join, run
 docker run -it --rm --init \
 --volume ~/infinite-minecraft-players-poc:/home/infinite-minecraft-players-poc \
 --workdir /home/infinite-minecraft-players-poc/bots \
-node index.js 100 1000
+node index.js 100 1000 0
 ```
 
 ## Compiling jars
@@ -116,12 +116,8 @@ And replace them in `server-plugin/libs/`
 
 ### Proxy plugin
 
-You can import `proxy-plugin/` into an IDE like IntelliJ and import the libs in `proxy-plugin/libs/` :
-
--   BungeeCord jar as provided
--   Java websocket as compile
-
-Then build the jar and replace it in `proxy/plugins/`
+You can import `proxy-plugin/` into an IDE like IntelliJ as a Maven project :
+Then run the default Maven goal and replace the jar in `proxy/plugins/` by the one you built in `proxy-plugins/target`
 
 ### Server plugin
 
@@ -148,6 +144,6 @@ And replace it in `server-template/plugins/`
 
 ## TODO
 
--   Scale proxies
 -   Support of multiple nodes
 -   Switch to Paper
+-   Scale proxies
