@@ -7,8 +7,8 @@ This is not new, Hypixel (and others) have probably already done it
 
 ### Prerequisites :
 
-- A Linux server
-- Have installed [Docker](https://docs.docker.com/engine/install/)
+-   A Linux server
+-   [Docker](https://docs.docker.com/engine/install/) installed
 
 The installation can be run with any user, but the same for each step, and will create files as root.  
 The installation will be in the `~/infinite-minecraft-players-poc/` dir.
@@ -17,7 +17,7 @@ The installation will be in the `~/infinite-minecraft-players-poc/` dir.
 
 Clone the repository with `alpine/git` Docker image by running
 
-```
+```bash
 docker run -it --rm \
 --volume ~:/git \
 alpine/git clone https://github.com/Raraph84/Infinite-Minecraft-Players-POC.git infinite-minecraft-players-poc/
@@ -26,10 +26,10 @@ alpine/git clone https://github.com/Raraph84/Infinite-Minecraft-Players-POC.git 
 ### Step 2 : Set the API key
 
 Generate a random string of the length that you want (100 is good)  
-Copy `config.example.yml` to `config.yml` and fill it with the generated key
+Copy `config.example.{yml/json}` to `config.{yml/json}` and fill it with the generated key
 
-- in `proxy/plugins/Infinite-Minecraft-Players-POC-Proxy-Plugin/`
-- and `server-template/plugins/Infinite-Minecraft-Players-POC-Server-Plugin/`
+-   in `proxy/plugins/Infinite-Minecraft-Players-POC-Proxy-Plugin/`
+-   and `server-template/plugins/Infinite-Minecraft-Players-POC-Server-Plugin/`
 
 Copy `api/.env.example` to `api/.env` and fill it with the same generated key
 
@@ -37,7 +37,7 @@ Copy `api/.env.example` to `api/.env` and fill it with the same generated key
 
 Install the libs by running
 
-```
+```bash
 docker run -it --rm \
 --volume ~/infinite-minecraft-players-poc:/home/infinite-minecraft-players-poc \
 --workdir /home/infinite-minecraft-players-poc/api \
@@ -46,7 +46,7 @@ node npm install --omit=dev
 
 and
 
-```
+```bash
 docker run -it --rm \
 --volume ~/infinite-minecraft-players-poc:/home/infinite-minecraft-players-poc \
 --workdir /home/infinite-minecraft-players-poc/bots \
@@ -57,7 +57,7 @@ node npm install --omit=dev
 
 Open a terminal and run
 
-```
+```bash
 docker run -it --init \
 --name api \
 --volume ~/infinite-minecraft-players-poc:$HOME/infinite-minecraft-players-poc \
@@ -73,7 +73,7 @@ To expose the API, you can remove the `172.17.0.1:` part
 
 Open a terminal and run
 
-```
+```bash
 docker run -it --rm --init \
 --volume ~/infinite-minecraft-players-poc:/home/infinite-minecraft-players-poc \
 --workdir /home/infinite-minecraft-players-poc/bots \
@@ -82,7 +82,7 @@ node index.js <player count> <delay between each player join>
 
 For example, for 100 bots with 1 second delay between each join, run
 
-```
+```bash
 docker run -it --rm --init \
 --volume ~/infinite-minecraft-players-poc:/home/infinite-minecraft-players-poc \
 --workdir /home/infinite-minecraft-players-poc/bots \
@@ -118,8 +118,8 @@ And replace them in `server-plugin/libs/`
 
 You can import `proxy-plugin/` into an IDE like IntelliJ and import the libs in `proxy-plugin/libs/` :
 
-- BungeeCord jar as provided
-- Java websocket as compile
+-   BungeeCord jar as provided
+-   Java websocket as compile
 
 Then build the jar and replace it in `proxy/plugins/`
 
@@ -127,8 +127,8 @@ Then build the jar and replace it in `proxy/plugins/`
 
 You can import `server-plugin/` into an IDE like IntelliJ and import the libs in `server-plugin/libs/` :
 
-- Spigot jar as provided
-- Java websocket, SLF4J API and Simple as compile
+-   Spigot jar as provided
+-   Java websocket, SLF4J API and Simple as compile
 
 Then build the jar and replace it in `server-template/plugins/`
 
@@ -148,5 +148,6 @@ And replace it in `server-template/plugins/`
 
 ## TODO
 
-- Scale proxies
-- Support of multiple nodes
+-   Scale proxies
+-   Support of multiple nodes
+-   Switch to Paper
