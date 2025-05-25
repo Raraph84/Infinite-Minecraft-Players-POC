@@ -275,7 +275,7 @@ class Server extends Container {
      * @param {number} memory
      */
     async start(memory) {
-        await super.start(memory, "spigot-1.12.2.jar");
+        await super.start(memory, "paper.jar");
     }
 
     async stop() {
