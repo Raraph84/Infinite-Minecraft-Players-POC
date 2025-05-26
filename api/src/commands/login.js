@@ -58,6 +58,11 @@ module.exports.run = async (message, client, servers) => {
         client.infos.serverName = server.name;
         server.gatewayConnected(client);
     } else if (message.type === "proxy") {
+        if (servers.proxy.state !== "started") {
+            client.close("Proxy is not started");
+            return;
+        }
+
         servers.proxy.gatewayConnected(client);
     }
 

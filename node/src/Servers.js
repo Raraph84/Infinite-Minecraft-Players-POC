@@ -1,57 +1,42 @@
-const { Lobby, Game } = require("./Containers");
+const { Lobby, Game, Server } = require("./Containers");
 
 class Servers {
     /**
      * @param {import("dockerode")} docker
      * @param {import("./DockerEventListener")} dockerEvents
-     * @param {import("raraph84-lib/src/WebSocketServer")} gateway
      */
-    constructor(docker, dockerEvents, gateway) {
+    constructor(docker, dockerEvents) {
         this.docker = docker;
         this.dockerEvents = dockerEvents;
-        this.gateway = gateway;
 
         /** @type {import("./Containers").Server[]} */
         this.servers = [];
-
-        this.scalingLobbies = false;
-        this.scalingGames = false;
-
-        this.savingState = false;
-        this.needSaveState = false;
     }
 
-    async startLobbyServer() {
-        let id = 1;
-        while (this.servers.find((server) => server instanceof Lobby && server.id === id)) id++;
-
-        const server = new Lobby(this, id);
+    /**
+     * @param {Server} server
+     */
+    async startServer(server) {
         this.servers.push(server);
-        this.saveState();
 
-        this.gateway.clients
-            .filter((client) => client.infos.logged)
-            .forEach((client) => client.emitEvent("SERVER_CREATED", server.toApiObj(true)));
+        require("./gateway").getLastWs().sendCommand("SERVER_ACTION", { name: server.name, action: "created" });
 
-        await server.start();
+        const containers = await this.docker.listContainers();
+        if (containers.some((container) => container.Names[0] === "/" + server.name)) {
+            this.dockerEvents.on("rawEvent", server._bindDockerEventHandler);
+            server._setState("started");
+        } else await server.start();
+    }
 
+    async startLobbyServer(id, port) {
+        const server = new Lobby(this, id, port);
+        await this.startServer(server);
         return server;
     }
 
-    async startGameServer() {
-        let id = 1;
-        while (this.servers.find((server) => server instanceof Game && server.id === id)) id++;
-
-        const server = new Game(this, id);
-        this.servers.push(server);
-        this.saveState();
-
-        this.gateway.clients
-            .filter((client) => client.infos.logged)
-            .forEach((client) => client.emitEvent("SERVER_CREATED", server.toApiObj(true)));
-
-        await server.start();
-
+    async startGameServer(id, port) {
+        const server = new Game(this, id, port);
+        await this.startServer(server);
         return server;
     }
 
@@ -63,11 +48,13 @@ class Servers {
         else if (server.state !== "stopped") throw new Error("Server is not started or stopped");
 
         this.servers = this.servers.filter((s) => s !== server);
-        this.saveState();
 
-        this.gateway.clients
-            .filter((client) => client.infos.logged)
-            .forEach((client) => client.emitEvent("SERVER_REMOVED", { name: server.name }));
+        require("./gateway").getLastWs().sendCommand("SERVER_ACTION", { name: server.name, action: "removed" });
+    }
+
+    async clearServers() {
+        for (const server of this.servers) this.dockerEvents.removeListener("rawEvent", server._bindDockerEventHandler);
+        this.servers = [];
     }
 }
 

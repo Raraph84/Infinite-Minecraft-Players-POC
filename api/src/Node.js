@@ -3,13 +3,19 @@ const EventEmitter = require("events");
 class Node extends EventEmitter {
     /**
      * @param {string} name
+     * @param {string} host
+     * @param {number} maxMemory
      * @param {import("raraph84-lib/src/WebSocketServer")} gateway
+     * @param {import("./Servers")} servers
      */
-    constructor(name, gateway) {
+    constructor(name, host, maxMemory, gateway, servers) {
         super();
 
         this.name = name;
+        this.host = host;
+        this.maxMemory = maxMemory;
         this.gateway = gateway;
+        this.servers = servers;
 
         /** @type {import("raraph84-lib/src/WebSocketClient")} */
         this.gatewayClient = null;
@@ -26,6 +32,11 @@ class Node extends EventEmitter {
             .filter((client) => client.infos.logged)
             .forEach((client) => client.emitEvent("NODE_GATEWAY_CONNECTED", { name: this.name }));
         console.log("Node " + this.name + " connected to the gateway.");
+
+        for (const server of this.servers.servers) {
+            if (server.node.name !== this.name) continue;
+            client.emitEvent("SERVER_ACTION", { action: "create", ...server.toApiObj(true) });
+        }
     }
 
     gatewayDisconnected() {

@@ -1,4 +1,4 @@
-const { Proxy, Lobby, Game } = require("./Containers");
+const { Proxy, Lobby, Game, Server } = require("./Containers");
 const { promises: fs, existsSync } = require("fs");
 const path = require("path");
 const config = require("../config.json");
@@ -29,20 +29,42 @@ class Servers {
         this.needSaveState = false;
     }
 
-    async startLobbyServer() {
-        let id = 1;
-        while (this.servers.find((server) => server instanceof Lobby && server.id === id)) id++;
-
-        const server = new Lobby(this, id);
+    /**
+     * @param {Server} server
+     */
+    async _startServer(server) {
         this.servers.push(server);
         this.saveState();
+
+        server.node.gatewayClient.emitEvent("SERVER_ACTION", { action: "create", ...server.toApiObj(true) });
+        await new Promise((resolve) => server.once("actionCreated", resolve));
 
         this.gateway.clients
             .filter((client) => client.infos.logged)
             .forEach((client) => client.emitEvent("SERVER_CREATED", server.toApiObj(true)));
+    }
 
-        await server.start();
+    async getAvailableNode() {
+        while (!this.nodes.some((node) => node.gatewayClient))
+            await new Promise((resolve) => setTimeout(resolve, 1000));
 
+        const scount = (node) => this.servers.filter((server) => server.node === node).length;
+        const availableNodes = this.nodes.filter((node) => node.gatewayClient);
+
+        availableNodes.sort((a, b) => scount(a) / a.maxMemory - scount(b) / b.maxMemory);
+
+        // TODO Check max ram
+
+        return availableNodes[0];
+    }
+
+    async startLobbyServer() {
+        let id = 1;
+        while (this.servers.find((server) => server instanceof Lobby && server.id === id)) id++;
+
+        const node = await this.getAvailableNode();
+        const server = new Lobby(this, id, node);
+        await this._startServer(server);
         return server;
     }
 
@@ -69,16 +91,9 @@ class Servers {
         let id = 1;
         while (this.servers.find((server) => server instanceof Game && server.id === id)) id++;
 
-        const server = new Game(this, id);
-        this.servers.push(server);
-        this.saveState();
-
-        this.gateway.clients
-            .filter((client) => client.infos.logged)
-            .forEach((client) => client.emitEvent("SERVER_CREATED", server.toApiObj(true)));
-
-        await server.start();
-
+        const node = await this.getAvailableNode();
+        const server = new Game(this, id, node);
+        await this._startServer(server);
         return server;
     }
 
@@ -103,8 +118,8 @@ class Servers {
      * @param {import("./Containers").Server} server
      */
     async removeServer(server) {
-        if (server.state === "started") await server.stop();
-        else if (server.state !== "stopped") throw new Error("Server is not started or stopped");
+        server.node.gatewayClient.emitEvent("SERVER_ACTION", { action: "remove", ...server.toApiObj(true) });
+        await new Promise((resolve) => server.once("actionRemoved", resolve));
 
         this.servers = this.servers.filter((s) => s !== server);
         this.saveState();
@@ -129,10 +144,17 @@ class Servers {
             },
             servers: this.servers.map((server) => {
                 if (server instanceof Lobby)
-                    return { type: "lobby", id: server.id, port: server.port, state: server.state };
+                    return {
+                        type: "lobby",
+                        node: server.node.name,
+                        id: server.id,
+                        port: server.port,
+                        state: server.state
+                    };
                 else if (server instanceof Game)
                     return {
                         type: "game",
+                        node: server.node.name,
                         id: server.id,
                         port: server.port,
                         state: server.state,
@@ -152,8 +174,8 @@ class Servers {
         if (!existsSync(stateFile)) return;
 
         const state = JSON.parse(await fs.readFile(stateFile, "utf8"));
-        const containers = await this.docker.listContainers();
 
+        const containers = await this.docker.listContainers();
         if (
             state.proxy.state === "started" &&
             containers.some((container) => container.Names[0] === "/" + this.proxy.name)
@@ -163,51 +185,51 @@ class Servers {
         }
 
         for (const serverState of state.servers) {
+            const node = this.nodes.find((node) => node.name === serverState.node);
+            if (!node) throw new Error(`Node ${serverState.node} not found`);
+            if (!node.gatewayClient) continue;
+
             let server;
-            if (serverState.type === "lobby") server = new Lobby(this, serverState.id);
-            else if (serverState.type === "game") server = new Game(this, serverState.id);
+            if (serverState.type === "lobby") server = new Lobby(this, serverState.id, node, serverState.port);
+            else if (serverState.type === "game") server = new Game(this, serverState.id, node, serverState.port);
             else return;
-            server.port = serverState.port;
             this.servers.push(server);
+
+            node.gatewayClient.emitEvent("SERVER_ACTION", { action: "create", ...server.toApiObj(true) });
+            await new Promise((resolve) => server.once("actionCreated", resolve));
 
             this.gateway.clients
                 .filter((client) => client.infos.logged)
-                .forEach((client) => client.emitEvent("SERVER_CREATED", server.toApiObj(true)));
-
-            if (
-                serverState.state === "started" &&
-                containers.some((container) => container.Names[0] === "/" + server.name)
-            ) {
-                if (server instanceof Game && serverState.gameStarted) server.gameStarted = true;
-                this.dockerEvents.on("rawEvent", server._bindDockerEventHandler);
-                server._setState("started");
-            } else await server.start();
+                .forEach((client) => client.emitEvent("SERVER_RESTORED", server.toApiObj(true)));
         }
 
-        await new Promise((resolve) => setTimeout(resolve, 4000)); // Wait 4 seconds for servers to reconnect to the gateway
+        this.saveState();
     }
 
     async start() {
-        if (
-            config.proxyMemory + config.lobbyServerMemory + config.gameServerMemory > config.maxMemory &&
-            config.maxMemory > 0
-        )
-            throw new Error("Base memory usage is higher than max memory");
+        console.log("Waiting for nodes to reconnect...");
+        await new Promise((resolve) => setTimeout(resolve, 4000));
 
         console.log("Loading state...");
         await this.loadState();
 
+        console.log("Waiting for servers to reconnect...");
+        await new Promise((resolve) => setTimeout(resolve, 4000));
+
         console.log("Starting not started servers...");
-        if (this.proxy.state !== "started") this.proxy.start();
+        if (this.proxy.state !== "started") await this.proxy.start();
+
         if (config.lobbyServersScalingInterval) {
-            this.scaleLobbies();
+            await this.scaleLobbies();
             setInterval(() => this.scaleLobbies(), config.lobbyServersScalingInterval);
         }
 
         if (config.gameServersScalingInterval) {
-            this.scaleGames();
+            await this.scaleGames();
             setInterval(() => this.scaleGames(), config.gameServersScalingInterval);
         }
+
+        console.log("Successfully started!");
     }
 
     async scaleLobbies() {
@@ -219,11 +241,11 @@ class Servers {
         let requiredServerCount = Math.max(1, Math.ceil((totalPlayerCount * 1.1) / config.lobbyPlayers)); // 10% more servers than required and minimum 1
 
         // Decrement requiredServerCount while ram usage is more than configured max memory
-        const otherMemory =
+        /*const otherMemory =
             config.proxyMemory +
             this.servers.reduce((acc, server) => acc + (server instanceof Game ? config.gameServerMemory : 0), 0);
         while (otherMemory + requiredServerCount * config.lobbyServerMemory > config.maxMemory && config.maxMemory > 0)
-            requiredServerCount--;
+            requiredServerCount--;*/
 
         if (servers.length < requiredServerCount)
             console.log("Scaling up lobby servers...", totalPlayerCount, servers.length, requiredServerCount);
@@ -270,11 +292,11 @@ class Servers {
         }
 
         // Decrement requiredServerCount while ram usage is more than configured max memory
-        const otherMemory =
+        /*const otherMemory =
             config.proxyMemory +
             this.servers.reduce((acc, server) => acc + (server instanceof Lobby ? config.lobbyServerMemory : 0), 0);
         while (otherMemory + requiredServerCount * config.gameServerMemory > config.maxMemory && config.maxMemory > 0)
-            requiredServerCount--;
+            requiredServerCount--;*/
 
         if (servers.length < requiredServerCount)
             console.log("Scaling up game servers...", totalPlayerCount, servers.length, requiredServerCount);

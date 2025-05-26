@@ -14,9 +14,13 @@ module.exports.init = async (servers) => {
 
     const connect = () => {
         const ws = new Ws("ws://" + config.apiHost + "/gateway", { handshakeTimeout: 5000 });
-        ws.sendCommand = (command, message = {}) => ws.send(JSON.stringify({ command, ...message }));
+        ws.sendCommand = (command, message = {}) => {
+            console.log("->", { command, ...message });
+            ws.send(JSON.stringify({ command, ...message }));
+        };
 
         ws.on("open", () => {
+            lastWs = ws;
             ws.sendCommand("LOGIN", {
                 token: process.env.API_KEY,
                 type: "node",
@@ -24,12 +28,13 @@ module.exports.init = async (servers) => {
             });
         });
 
-        ws.on("close", (code, reason) => {
+        ws.on("close", async (code, reason) => {
             if (connected) console.log("Disconnected from the gateway, reconnecting...", code, reason.toString());
+            await servers.clearServers();
             lastWs = null;
             lastHeartbeat = -1;
             connected = false;
-            setTimeout(connect, 5000);
+            setTimeout(connect, 3000);
         });
 
         ws.on("error", () => {});
@@ -42,17 +47,26 @@ module.exports.init = async (servers) => {
                 return;
             }
 
+            console.log("<-", message);
+
             const event = message.event;
             delete message.event;
 
             if (event === "LOGGED") {
-                lastWs = ws;
                 lastHeartbeat = Date.now();
                 connected = true;
                 console.log("Connected to the gateway !");
             } else if (event === "HEARTBEAT") {
                 lastHeartbeat = Date.now();
                 ws.sendCommand("HEARTBEAT");
+            } else if (event === "SERVER_ACTION") {
+                if (message.action === "create") {
+                    if (message.type === "lobby") servers.startLobbyServer(message.id, message.port);
+                    else if (message.type === "game") servers.startGameServer(message.id, message.port);
+                } else if (message.action === "remove") {
+                    const server = servers.servers.find((s) => s.name === message.name);
+                    servers.removeServer(server);
+                }
             }
         });
     };
