@@ -1,6 +1,7 @@
-const { promises: fs, existsSync } = require("fs");
-const path = require("path");
-const Dockerode = require("dockerode");
+import { existsSync, promises as fs } from "fs";
+import Dockerode from "dockerode";
+import path from "path";
+
 const DockerEventListener = require("./src/DockerEventListener");
 const Servers = require("./src/Servers");
 const config = require("./config.json");
@@ -19,7 +20,7 @@ require("dotenv").config();
             if (error) console.log("Cannot pull openjdk:8 Docker image - " + error);
             else {
                 console.log("Pulled openjdk:8 Docker image.");
-                resolve();
+                resolve(null);
             }
         });
     });

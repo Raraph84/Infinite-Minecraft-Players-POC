@@ -1,8 +1,9 @@
-const { WebSocketServer, HttpServer } = require("raraph84-lib");
-const Dockerode = require("dockerode");
+import { HttpServer, WebSocketServer } from "raraph84-lib";
+import Dockerode from "dockerode";
+
 const DockerEventListener = require("./src/DockerEventListener");
-const Node = require("./src/Node");
 const Servers = require("./src/Servers");
+const Node = require("./src/Node");
 const config = require("./config.json");
 
 require("dotenv").config();
@@ -12,11 +13,11 @@ require("dotenv").config();
 
     await new Promise(async (resolve) => {
         console.log("Pulling openjdk:21 Docker image...");
-        docker.modem.followProgress(await docker.pull("openjdk:21"), (error) => {
+        docker.modem.followProgress(await docker.pull("openjdk:21"), (error: any) => {
             if (error) console.log("Cannot pull openjdk:21 Docker image - " + error);
             else {
                 console.log("Pulled openjdk:21 Docker image.");
-                resolve();
+                resolve(null);
             }
         });
     });
@@ -34,9 +35,9 @@ require("dotenv").config();
     const api = new HttpServer();
     const gateway = new WebSocketServer();
 
-    const nodes = [];
+    const nodes: Node[] = [];
     const servers = new Servers(docker, dockerEvents, gateway, nodes);
-    config.nodes.forEach((node) => nodes.push(new Node(node.name, node.host, node.maxMemory, gateway, servers)));
+    config.nodes.forEach((node: any) => nodes.push(new Node(node.name, node.host, node.maxMemory, gateway, servers)));
 
     console.log("Starting the API...");
     try {

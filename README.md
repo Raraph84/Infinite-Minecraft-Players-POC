@@ -129,17 +129,13 @@ And replace them in `server-plugin/libs/`
 
 ### Proxy plugin
 
-You can import `proxy-plugin/` into an IDE like IntelliJ as a Maven project :
-Then run the default Maven goal and replace the jar in `proxy/plugins/` by the one you built in `proxy-plugins/target`
+You can import `proxy-plugin/` into an IDE like IntelliJ as a Maven project
+Then run the default Maven goal and replace the jar in `proxy/plugins/` by the one you built in `proxy-plugin/target`
 
 ### Server plugin
 
-You can import `server-plugin/` into an IDE like IntelliJ and import the libs in `server-plugin/libs/` :
-
--   Spigot jar as provided
--   Java websocket, SLF4J API and Simple as compile
-
-Then build the jar and replace it in `server-template/plugins/`
+You can import `server-plugin/` into an IDE like IntelliJ as a Maven project
+Then run the default Maven goal and replace the jar in `server-template/plugins/` by the one you built in `server-plugin/target`
 
 ### WorldEdit
 
@@ -150,6 +146,4 @@ And replace it in `server-template/plugins/`
 
 ## TODO
 
--   Migrate to Typescript
--   Migrate Spigot plugin to Maven
 -   Scale proxies

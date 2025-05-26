@@ -15,7 +15,7 @@ module.exports.init = async (servers) => {
     const connect = () => {
         const ws = new Ws("ws://" + config.apiHost + "/gateway", { handshakeTimeout: 5000 });
         ws.sendCommand = (command, message = {}) => {
-            console.log("->", { command, ...message });
+            //console.log("->", { command, ...message });
             ws.send(JSON.stringify({ command, ...message }));
         };
 
@@ -47,7 +47,7 @@ module.exports.init = async (servers) => {
                 return;
             }
 
-            console.log("<-", message);
+            //console.log("<-", message);
 
             const event = message.event;
             delete message.event;
