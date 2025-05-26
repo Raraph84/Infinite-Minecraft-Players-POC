@@ -1,16 +1,25 @@
 {
   "name": "infinite-minecraft-players-poc-api",
   "version": "1.0.0",
-  "description": "",
   "main": "index.js",
+  "scripts": {
+    "dev": "ts-node-dev index.js",
+    "build": "tsc",
+    "start": "node index.js",
+    "format": "prettier --write **/*.{js,ts,json}"
+  },
+  "keywords": [],
   "author": "Raraph84",
-  "license": "ISC",
+  "license": "MIT",
+  "description": "",
   "dependencies": {
     "dockerode": "^4.0.6",
     "dotenv": "^16.5.0",
-    "raraph84-lib": "^2.20.0"
+    "raraph84-lib": "^2.20.0",
+    "typescript": "^5.8.3"
   },
   "devDependencies": {
-    "prettier": "^3.5.3"
+    "prettier": "^3.5.3",
+    "ts-node-dev": "^2.0.0"
   }
 }

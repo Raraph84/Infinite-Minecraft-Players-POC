@@ -1,10 +1,14 @@
 {
   "name": "infinite-minecraft-players-poc-bots",
   "version": "1.0.0",
-  "description": "",
   "main": "index.js",
+  "scripts": {
+    "format": "prettier --write **/*.{js,ts,json}"
+  },
+  "keywords": [],
   "author": "Raraph84",
-  "license": "ISC",
+  "license": "MIT",
+  "description": "",
   "dependencies": {
     "mineflayer": "^4.29.0"
   },
