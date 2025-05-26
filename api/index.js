@@ -1,6 +1,4 @@
-const { promises: fs, existsSync } = require("fs");
 const { WebSocketServer, HttpServer } = require("raraph84-lib");
-const path = require("path");
 const Dockerode = require("dockerode");
 const DockerEventListener = require("./src/DockerEventListener");
 const Node = require("./src/Node");
@@ -10,21 +8,7 @@ const config = require("./config.json");
 require("dotenv").config();
 
 (async () => {
-    const serversDir = path.resolve(config.serversDir);
-    if (!existsSync(serversDir)) await fs.mkdir(serversDir);
-
     const docker = new Dockerode();
-
-    await new Promise(async (resolve) => {
-        console.log("Pulling openjdk:8 Docker image...");
-        docker.modem.followProgress(await docker.pull("openjdk:8"), (error) => {
-            if (error) console.log("Cannot pull openjdk:8 Docker image - " + error);
-            else {
-                console.log("Pulled openjdk:8 Docker image.");
-                resolve();
-            }
-        });
-    });
 
     await new Promise(async (resolve) => {
         console.log("Pulling openjdk:21 Docker image...");
@@ -50,8 +34,9 @@ require("dotenv").config();
     const api = new HttpServer();
     const gateway = new WebSocketServer();
 
-    const nodes = config.nodes.map((node) => new Node(node.name, gateway));
+    const nodes = [];
     const servers = new Servers(docker, dockerEvents, gateway, nodes);
+    config.nodes.forEach((node) => nodes.push(new Node(node.name, node.host, node.maxMemory, gateway, servers)));
 
     console.log("Starting the API...");
     try {

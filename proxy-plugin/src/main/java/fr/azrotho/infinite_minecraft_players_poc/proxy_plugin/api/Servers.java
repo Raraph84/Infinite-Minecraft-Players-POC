@@ -21,7 +21,7 @@ public class Servers {
         for (RegisteredServer server : proxy.getAllServers())
             proxy.unregisterServer(server.getServerInfo());
         for (Server server : Servers.getServers())
-            proxy.registerServer(new ServerInfo(server.getName(), new InetSocketAddress("172.17.0.1", server.getPort())));
+            proxy.registerServer(new ServerInfo(server.getName(), new InetSocketAddress(server.getHost(), server.getPort())));
     }
 
     public static Server getServer(String name) {
@@ -39,7 +39,7 @@ public class Servers {
         servers.add(server);
 
         ProxyServer proxy = InfinityPlugin.getInstance().getServer();
-        proxy.registerServer(new ServerInfo(server.getName(), new InetSocketAddress("172.17.0.1", server.getPort())));
+        proxy.registerServer(new ServerInfo(server.getName(), new InetSocketAddress(server.getHost(), server.getPort())));
     }
 
     public static void onServerRemoved(Server server) {
@@ -55,17 +55,23 @@ public class Servers {
     public static class Server {
 
         private final String name;
+        private final String host;
         private final int port;
         private final int maxPlayers;
 
         public Server(JsonObject server) {
             this.name = server.getAsJsonPrimitive("name").getAsString();
+            this.host = server.getAsJsonPrimitive("host").getAsString();
             this.port = server.getAsJsonPrimitive("port").getAsInt();
             this.maxPlayers = server.getAsJsonPrimitive("maxPlayers").getAsInt();
         }
 
         public String getName() {
             return name;
+        }
+
+        public String getHost() {
+            return host;
         }
 
         public int getPort() {

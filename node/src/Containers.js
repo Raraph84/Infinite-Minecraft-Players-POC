@@ -3,19 +3,18 @@ const EventEmitter = require("events");
 const path = require("path");
 const config = require("../config.json");
 
-class Container extends EventEmitter {
+class Server extends EventEmitter {
     /**
      * @param {import("./Servers")} servers
      * @param {string} name
-     * @param {string} path
      * @param {number} port
      */
-    constructor(servers, name, path, port) {
+    constructor(servers, name, port) {
         super();
 
         this.servers = servers;
         this.name = name;
-        this.path = path;
+        this.path = path.join(path.resolve(config.serversDir), name);
         this.port = port;
 
         /** @type {"stopped"|"starting"|"started"|"stopping"} */
@@ -30,9 +29,7 @@ class Container extends EventEmitter {
     _setState(state) {
         this.state = state;
         this.emit(state);
-        this.servers.gateway.clients
-            .filter((client) => client.infos.logged)
-            .forEach((client) => client.emitEvent("SERVER_STATE", { name: this.name, state: state }));
+        require("./gateway").getLastWs().sendCommand("SERVER_STATE", { name: this.name, state: state });
     }
 
     /**
@@ -60,15 +57,23 @@ class Container extends EventEmitter {
                 else throw error;
             }
         }
+
+        if (existsSync(this.path)) await fs.rm(this.path, { recursive: true });
     }
 
     /**
      * @param {number} memory
-     * @param {string} file
-     * @param {boolean} exposed
      */
-    async start(memory, file, exposed = false) {
+    async start(memory) {
         await this._preStart();
+
+        const configFile = path.join(
+            this.path,
+            "plugins",
+            "Infinite-Minecraft-Players-POC-Server-Plugin",
+            "config.yml"
+        );
+        await fs.writeFile(configFile, (await fs.readFile(configFile, "utf8")).replace("SERVERNAME", this.name));
 
         this.servers.dockerEvents.on("rawEvent", this._bindDockerEventHandler);
 
@@ -77,12 +82,12 @@ class Container extends EventEmitter {
             ExposedPorts: { "25565/tcp": {} },
             Tty: true,
             OpenStdin: true,
-            Cmd: ["java", "-Xmx" + memory * 1024 + "M", "-jar", file],
+            Cmd: ["java", "-Xmx" + memory * 1024 + "M", "-jar", "spigot-1.12.2.jar"],
             Image: "openjdk:8",
             WorkingDir: "/home/server",
             HostConfig: {
                 PortBindings: {
-                    "25565/tcp": [{ HostIp: exposed ? "" : "172.17.0.1", HostPort: this.port.toString() }]
+                    "25565/tcp": [{ HostIp: "", HostPort: this.port.toString() }]
                 },
                 Binds: [this.path + ":/home/server"],
                 AutoRemove: true
@@ -99,16 +104,13 @@ class Container extends EventEmitter {
         console.log("Container " + this.name + " started.");
     }
 
-    /**
-     * @param {string} command
-     */
-    async stop(command) {
+    async stop() {
         if (this.state !== "started") throw new Error("Not started");
         this._setState("stopping");
 
         console.log("Stopping container " + this.name + "...");
 
-        await this._send(command);
+        await this._send("stop");
 
         const killTimeout = setTimeout(() => this.kill(), 30 * 1000);
 
@@ -155,59 +157,20 @@ class Container extends EventEmitter {
     }
 }
 
-class Server extends Container {
-    /**
-     * @param {import("./Servers")} servers
-     * @param {string} name
-     */
-    constructor(servers, name) {
-        let port = config.serversStartingPort;
-        while (servers.servers.some((server) => server.port === port)) port++;
-
-        super(servers, name, path.join(path.resolve(config.serversDir), name), port);
-    }
-
-    async _preStart() {
-        await super._preStart();
-
-        if (existsSync(this.path)) await fs.rm(this.path, { recursive: true });
-    }
-
-    /**
-     * @param {number} memory
-     */
-    async start(memory) {
-        await super.start(memory, "spigot-1.12.2.jar");
-    }
-
-    async stop() {
-        await super.stop("stop");
-    }
-}
-
 class Lobby extends Server {
     /**
      * @param {import("./Servers")} servers
      * @param {number} id
+     * @param {number} port
      */
-    constructor(servers, id) {
-        super(servers, "lobby" + id);
-
+    constructor(servers, id, port) {
+        super(servers, "lobby" + id, port);
         this.id = id;
     }
 
     async _preStart() {
         await super._preStart();
-
         await fs.cp(path.resolve(config.lobbyServerTemplateDir), this.path, { recursive: true });
-
-        const configFile = path.join(
-            this.path,
-            "plugins",
-            "Infinite-Minecraft-Players-POC-Server-Plugin",
-            "config.yml"
-        );
-        await fs.writeFile(configFile, (await fs.readFile(configFile, "utf8")).replace("SERVERNAME", this.name));
     }
 
     async start() {
@@ -219,36 +182,21 @@ class Game extends Server {
     /**
      * @param {import("./Servers")} servers
      * @param {number} id
+     * @param {number} port
      */
-    constructor(servers, id) {
-        super(servers, "game" + id);
-
+    constructor(servers, id, port) {
+        super(servers, "game" + id, port);
         this.id = id;
-        this.gameStarted = false;
     }
 
     async _preStart() {
         await super._preStart();
-
         await fs.cp(path.resolve(config.gameServerTemplateDir), this.path, { recursive: true });
-
-        const configFile = path.join(
-            this.path,
-            "plugins",
-            "Infinite-Minecraft-Players-POC-Server-Plugin",
-            "config.yml"
-        );
-        await fs.writeFile(configFile, (await fs.readFile(configFile, "utf8")).replace("SERVERNAME", this.name));
     }
 
     async start() {
         await super.start(config.gameServerMemory);
     }
-
-    async _postStop() {
-        this.gameStarted = false;
-        await super._postStop();
-    }
 }
 
-module.exports = { Container, Proxy, Server, Lobby, Game };
+module.exports = { Server, Lobby, Game };

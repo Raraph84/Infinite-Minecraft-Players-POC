@@ -3,29 +3,29 @@
     "proxyDir": "../proxy",
     "proxyMemory": 4,
     "proxyPort": 25565,
-    "serversDir": "../servers",
     "serversStartingPort": 25000,
-    "lobbyServerTemplateDir": "../server-template",
     "lobbyServersScalingInterval": 5000,
     "lobbyServerMemory": 4,
-    "lobbyPlayers": 50,
-    "lobbyMaxPlayers": 100,
-    "gameServerTemplateDir": "../server-template",
+    "lobbyPlayers": 60,
+    "lobbyMaxPlayers": 120,
     "gameServersScalingInterval": 0,
     "gameServerMemory": 1,
     "gamePlayers": 16,
     "nodes": [
         {
-            "name": "dedicated01",
-            "maxMemory": 96
+            "name": "dedicated14",
+            "maxMemory": 56,
+            "host": "192.168.1.114"
         },
         {
-            "name": "dedicated02",
-            "maxMemory": 96
+            "name": "dedicated16",
+            "maxMemory": 96,
+            "host": "192.168.1.116"
         },
         {
-            "name": "dedicated03",
-            "maxMemory": 96
+            "name": "dedicated04",
+            "maxMemory": 48,
+            "host": "192.168.1.104"
         }
     ],
     "stateFile": "./state.json"

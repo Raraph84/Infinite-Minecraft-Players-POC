@@ -1,4 +1,3 @@
-const { promises: fs, existsSync } = require("fs");
 const EventEmitter = require("events");
 const path = require("path");
 const config = require("../config.json");
@@ -69,9 +68,8 @@ class Container extends EventEmitter {
     /**
      * @param {number} memory
      * @param {string} file
-     * @param {boolean} exposed
      */
-    async start(memory, file, exposed = false) {
+    async start(memory, file) {
         await this._preStart();
 
         this.servers.dockerEvents.on("rawEvent", this._bindDockerEventHandler);
@@ -86,7 +84,7 @@ class Container extends EventEmitter {
             WorkingDir: "/home/server",
             HostConfig: {
                 PortBindings: {
-                    "25565/tcp": [{ HostIp: exposed ? "" : "172.17.0.1", HostPort: this.port.toString() }]
+                    "25565/tcp": [{ HostIp: "", HostPort: this.port.toString() }]
                 },
                 Binds: [this.path + ":/home/server"],
                 AutoRemove: true
@@ -241,7 +239,7 @@ class Proxy extends Container {
     }
 
     async start() {
-        await super.start(config.proxyMemory, "velocity.jar", true);
+        await super.start(config.proxyMemory, "velocity.jar");
     }
 
     async stop() {
@@ -249,37 +247,47 @@ class Proxy extends Container {
     }
 }
 
-class Server extends Container {
+class Server extends EventEmitter {
     /**
      * @param {import("./Servers")} servers
      * @param {string} name
+     * @param {import("./Node")} node
      * @param {number} maxPlayers
+     * @param {number|null} port
      */
-    constructor(servers, name, maxPlayers) {
-        let port = config.serversStartingPort;
-        while (servers.servers.some((server) => server.port === port)) port++;
+    constructor(servers, name, node, maxPlayers, port = null) {
+        super();
 
-        super(servers, name, path.join(path.resolve(config.serversDir), name), port);
+        if (!port) {
+            port = config.serversStartingPort;
+            while (servers.servers.some((server) => server.port === port)) port++;
+        }
 
+        this.servers = servers;
+        this.name = name;
+        this.node = node;
         this.maxPlayers = maxPlayers;
+        this.port = port;
+
+        /** @type {"stopped"|"starting"|"started"|"stopping"} */
+        this.state = "stopped";
+        /** @type {import("raraph84-lib/src/WebSocketClient")} */
+        this.gatewayClient = null;
+
+        this.players = [];
         this.connectingPlayers = [];
     }
 
-    async _preStart() {
-        await super._preStart();
-
-        if (existsSync(this.path)) await fs.rm(this.path, { recursive: true });
-    }
-
     /**
-     * @param {number} memory
+     * @param {"stopped"|"starting"|"started"|"stopping"} state
      */
-    async start(memory) {
-        await super.start(memory, "spigot-1.12.2.jar");
-    }
-
-    async stop() {
-        await super.stop("stop");
+    setState(state) {
+        this.state = state;
+        this.emit(state);
+        this.servers.saveState();
+        this.servers.gateway.clients
+            .filter((client) => client.infos.logged)
+            .forEach((client) => client.emitEvent("SERVER_STATE", { name: this.name, state: state }));
     }
 
     playerConnecting(uuid) {
@@ -301,10 +309,76 @@ class Server extends Container {
     }
 
     /**
+     * @param {string} uuid
+     * @param {string} username
+     */
+    playerJoin(uuid, username) {
+        if (this.players.some((player) => player.uuid === uuid)) throw new Error("This player is already connected");
+        this.players.push({ uuid, username });
+
+        this.emit("playerJoin", { uuid, username });
+        console.log("Player " + username + " connected to " + this.name + ".");
+    }
+
+    /**
+     * @param {string} uuid
+     */
+    playerQuit(uuid) {
+        const player = this.players.find((player) => player.uuid === uuid);
+
+        if (!player) throw new Error("This player is already disconnected");
+        this.players.splice(this.players.indexOf(player), 1);
+
+        this.emit("playerQuit", player);
+        console.log("Player " + player.username + " disconnected from " + this.name + ".");
+    }
+
+    /**
+     * @param {import("raraph84-lib/src/WebSocketClient")} client
+     */
+    gatewayConnected(client) {
+        if (this.gatewayClient) this.gatewayClient.close("Another client is already connected");
+        this.gatewayClient = client;
+        this.emit("gatewayConnected");
+        this.servers.gateway.clients
+            .filter((client) => client.infos.logged)
+            .forEach((client) => client.emitEvent("SERVER_GATEWAY_CONNECTED", { name: this.name }));
+        console.log("Container " + this.name + " connected to the gateway.");
+    }
+
+    gatewayDisconnected() {
+        if (!this.gatewayClient) throw new Error("No client connected");
+        while (this.players.length > 0) this.playerQuit(this.players[0].uuid);
+        this.gatewayClient = null;
+        this.emit("gatewayDisconnected");
+        this.servers.gateway.clients
+            .filter((client) => client.infos.logged)
+            .forEach((client) => client.emitEvent("SERVER_GATEWAY_DISCONNECTED", { name: this.name }));
+        console.log("Container " + this.name + " disconnected from the gateway.");
+    }
+
+    /**
      * @param {boolean} logged
      */
     toApiObj(logged) {
-        return { ...super.toApiObj(logged), maxPlayers: this.maxPlayers };
+        return logged
+            ? {
+                  name: this.name,
+                  node: this.node.name,
+                  host: this.node.host,
+                  port: this.port,
+                  state: this.state,
+                  gatewayConnected: !!this.gatewayClient,
+                  players: this.players.length,
+                  maxPlayers: this.maxPlayers
+              }
+            : {
+                  name: this.name,
+                  state: this.state,
+                  gatewayConnected: !!this.gatewayClient,
+                  players: this.players.length,
+                  maxPlayers: this.maxPlayers
+              };
     }
 }
 
@@ -312,29 +386,19 @@ class Lobby extends Server {
     /**
      * @param {import("./Servers")} servers
      * @param {number} id
+     * @param {import("./Node")} node
+     * @param {number|null} port
      */
-    constructor(servers, id) {
-        super(servers, "lobby" + id, config.lobbyMaxPlayers);
-
+    constructor(servers, id, node, port = null) {
+        super(servers, "lobby" + id, node, config.lobbyMaxPlayers, port);
         this.id = id;
     }
 
-    async _preStart() {
-        await super._preStart();
-
-        await fs.cp(path.resolve(config.lobbyServerTemplateDir), this.path, { recursive: true });
-
-        const configFile = path.join(
-            this.path,
-            "plugins",
-            "Infinite-Minecraft-Players-POC-Server-Plugin",
-            "config.yml"
-        );
-        await fs.writeFile(configFile, (await fs.readFile(configFile, "utf8")).replace("SERVERNAME", this.name));
-    }
-
-    async start() {
-        await super.start(config.lobbyServerMemory);
+    /**
+     * @param {boolean} logged
+     */
+    toApiObj(logged) {
+        return { type: "lobby", id: this.id, ...super.toApiObj(logged) };
     }
 }
 
@@ -342,9 +406,11 @@ class Game extends Server {
     /**
      * @param {import("./Servers")} servers
      * @param {number} id
+     * @param {import("./Node")} node
+     * @param {number|null} port
      */
-    constructor(servers, id) {
-        super(servers, "game" + id, config.gamePlayers);
+    constructor(servers, id, node, port = null) {
+        super(servers, "game" + id, node, config.gamePlayers, port);
 
         this.id = id;
         this.gameStarted = false;
@@ -364,34 +430,11 @@ class Game extends Server {
         });
     }
 
-    async _preStart() {
-        await super._preStart();
-
-        await fs.cp(path.resolve(config.gameServerTemplateDir), this.path, { recursive: true });
-
-        const configFile = path.join(
-            this.path,
-            "plugins",
-            "Infinite-Minecraft-Players-POC-Server-Plugin",
-            "config.yml"
-        );
-        await fs.writeFile(configFile, (await fs.readFile(configFile, "utf8")).replace("SERVERNAME", this.name));
-    }
-
-    async start() {
-        await super.start(config.gameServerMemory);
-    }
-
-    async _postStop() {
-        this.gameStarted = false;
-        await super._postStop();
-    }
-
     /**
      * @param {boolean} logged
      */
     toApiObj(logged) {
-        return { ...super.toApiObj(logged), gameStarted: this.gameStarted };
+        return { type: "game", id: this.id, ...super.toApiObj(logged), gameStarted: this.gameStarted };
     }
 }
 
