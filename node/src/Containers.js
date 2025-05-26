@@ -82,7 +82,7 @@ class Server extends EventEmitter {
             ExposedPorts: { "25565/tcp": {} },
             Tty: true,
             OpenStdin: true,
-            Cmd: ["java", "-Xmx" + memory * 1024 + "M", "-jar", "spigot-1.12.2.jar"],
+            Cmd: ["java", "-Xmx" + memory * 1024 + "M", "-jar", "paper.jar"],
             Image: "openjdk:8",
             WorkingDir: "/home/server",
             HostConfig: {
