@@ -1,0 +1,12 @@
+name: Infinite-Minecraft-Players-POC-Server-Plugin
+main: fr.raraph84.infinite_minecraft_players_poc.server_plugin.MinecraftInfinitePlayersPOCServerPlugin
+version: 1.0
+author: Raraph84
+
+commands:
+  play:
+    description: Connect you to a game server
+  lobby:
+    description: Connect you to a lobby server
+    aliases:
+      - hub
