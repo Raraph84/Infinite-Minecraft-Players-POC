@@ -29,22 +29,22 @@ Generate a random string of the length that you want (100 is good)
 Fill theses files with the generated key
 
 -   `api/.env` and `node/.env`
--   `proxy/plugins/Infinite-Minecraft-Players-POC-Proxy-Plugin/config.yml`
--   `server-template/plugins/Infinite-Minecraft-Players-POC-Server-Plugin/config.json`
+-   `proxy/plugins/infinite-minecraft-players-poc-proxy-plugin/config.json`
+-   `server-template/plugins/Infinite-Minecraft-Players-POC-Server-Plugin/config.yml`
 
-### Step 3 : Install the libs
+### Step 3 : Install the libs and compile
 
-Install the libs by running
+Install the libs and compile by running
 
 ```bash
 docker run -it --rm \
 --volume ~/infinite-minecraft-players-poc:/home/infinite-minecraft-players-poc \
 --workdir /home/infinite-minecraft-players-poc/api \
-node npm install --omit=dev
+node bash -c "npm install --omit=dev && npm run build"
 docker run -it --rm \
 --volume ~/infinite-minecraft-players-poc:/home/infinite-minecraft-players-poc \
 --workdir /home/infinite-minecraft-players-poc/node \
-node npm install --omit=dev
+node bash -c "npm install --omit=dev && npm run build"
 docker run -it --rm \
 --volume ~/infinite-minecraft-players-poc:/home/infinite-minecraft-players-poc \
 --workdir /home/infinite-minecraft-players-poc/bots \
@@ -62,7 +62,7 @@ docker run -it --init \
 --volume /var/run/docker.sock:/var/run/docker.sock \
 --workdir $HOME/infinite-minecraft-players-poc/api \
 --publish 8080:8080 \
-node index.js
+node npm start
 ```
 
 ### Step 5 : Start the node
@@ -75,7 +75,7 @@ docker run -it --init \
 --volume ~/infinite-minecraft-players-poc:$HOME/infinite-minecraft-players-poc \
 --volume /var/run/docker.sock:/var/run/docker.sock \
 --workdir $HOME/infinite-minecraft-players-poc/node \
-node index.js
+node npm start
 ```
 
 ### Step 6 : Start the bots
