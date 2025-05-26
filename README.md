@@ -25,8 +25,7 @@ alpine/git clone https://github.com/Raraph84/Infinite-Minecraft-Players-POC.git 
 
 ### Step 2 : Set the API key
 
-Generate a random string of the length that you want (100 is good)  
-Fill theses files with the generated key
+Generate a random string of the length of your choice (100 is good) and replace `exampleapikey` to the one you generated in theses files :
 
 -   `api/.env` and `node/.env`
 -   `proxy/plugins/infinite-minecraft-players-poc-proxy-plugin/config.json`
@@ -110,32 +109,17 @@ And replace it in `proxy/`
 
 You can build Paper from [its repository](https://github.com/PaperMC/Paper)  
 Or download it from [its website](https://papermc.io/downloads/paper)  
-And replace it in `proxy/`
-
-You can build Paper with [their buildtools](https://www.spigotmc.org/wiki/buildtools/)  
-And replace it in `server-template/` and `server-plugin/libs/`
-
-### Java Websocket
-
-You can build or download the Java websocket lib on [its repository](https://github.com/TooTallNate/Java-WebSocket)
-And replace it in `server-plugin/libs/`
-
-### SLF4J
-
-SLF4J API and Simple is required by Java websocket to run without errors on the Spigot (probably already built in BungeeCord)  
-You can build the jars on [its repository](https://github.com/qos-ch/slf4j)  
-Or download them on mvnrepository : [SLF4J API](https://mvnrepository.com/artifact/org.slf4j/slf4j-api) and [SLF4J Simple](https://mvnrepository.com/artifact/org.slf4j/slf4j-simple)  
-And replace them in `server-plugin/libs/`
+And replace it in `server-template/`
 
 ### Proxy plugin
 
-You can import `proxy-plugin/` into an IDE like IntelliJ as a Maven project
-Then run the default Maven goal and replace the jar in `proxy/plugins/` by the one you built in `proxy-plugin/target`
+You can import `proxy-plugin/` into an IDE like IntelliJ as a Maven project  
+Then run the default Maven goal and the jar will be built in `proxy/plugins/`
 
 ### Server plugin
 
-You can import `server-plugin/` into an IDE like IntelliJ as a Maven project
-Then run the default Maven goal and replace the jar in `server-template/plugins/` by the one you built in `server-plugin/target`
+You can import `server-plugin/` into an IDE like IntelliJ as a Maven project  
+Then run the default Maven goal and the jar will be built in `server-template/plugins/`
 
 ### WorldEdit
 
