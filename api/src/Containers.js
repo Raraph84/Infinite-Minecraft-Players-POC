@@ -128,11 +128,13 @@ class Container extends EventEmitter {
         this.servers.dockerEvents.removeListener("rawEvent", this._bindDockerEventHandler);
 
         const restart = this.state !== "stopping";
-
         this._setState("stopped");
-        console.log("Container " + this.name + " stopped.");
 
-        if (restart) this.start();
+        if (!restart) console.log("Container " + this.name + " stopped.");
+        else {
+            console.log("Container " + this.name + " stopped, restarting...");
+            this.start();
+        }
     }
 
     /**
@@ -425,8 +427,6 @@ class Game extends Server {
         this.on("playerQuit", async () => {
             if (!this.gameStarted || this.players.length !== 0) return;
             console.log("Game", this.id, "finished.");
-            await this.stop();
-            await this.start();
         });
     }
 

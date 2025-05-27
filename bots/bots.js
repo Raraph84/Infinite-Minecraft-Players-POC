@@ -27,13 +27,15 @@ const spawn = (i) => {
     bot.on("login", () => {
         console.log(`${username} has joined.`);
 
+        if (playing) play();
+    });
+
+    bot.on("spawn", () => {
         moveInterval = setInterval(() => {
             bot.setControlState("forward", true);
             bot.setControlState("jump", true);
             bot.look(Math.round(Math.random() * 200 - 100), 0);
         }, 1000);
-
-        if (playing) play();
 
         if (!moving) {
             setTimeout(() => {
