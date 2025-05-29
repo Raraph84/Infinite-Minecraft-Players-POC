@@ -23,6 +23,7 @@ const spawn = (i) => {
 
     let moveInterval;
     let playTimeout;
+    let stopTimeout;
 
     bot.on("login", () => {
         console.log(`${username} has joined.`);
@@ -31,20 +32,21 @@ const spawn = (i) => {
     });
 
     bot.on("spawn", () => {
-        moveInterval = setInterval(() => {
-            bot.setControlState("forward", true);
-            bot.setControlState("jump", true);
-            bot.look(Math.round(Math.random() * 200 - 100), 0);
-        }, 1000);
+        clearInterval(moveInterval);
+        clearTimeout(stopTimeout);
+
+        bot.physicsEnabled = true;
+        bot.setControlState("forward", true);
+        bot.setControlState("jump", true);
+
+        moveInterval = setInterval(() => bot.look(Math.round(Math.random() * 200 - 100), 0), 1000);
 
         if (!moving) {
-            setTimeout(() => {
+            stopTimeout = setTimeout(() => {
                 clearInterval(moveInterval);
                 bot.setControlState("forward", false);
                 bot.setControlState("jump", false);
-                setTimeout(() => {
-                    bot.physicsEnabled = false;
-                }, 5 * 1000);
+                setTimeout(() => (bot.physicsEnabled = false), 5 * 1000);
             }, 30 * 1000);
         }
     });
