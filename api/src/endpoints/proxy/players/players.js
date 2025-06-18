@@ -9,5 +9,5 @@ module.exports.run = async (request, servers) => {
 module.exports.infos = {
     method: "GET",
     path: "/proxy/players",
-    requireLogin: false
+    requiresAuth: false
 };

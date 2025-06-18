@@ -39,5 +39,5 @@ module.exports.run = async (request, servers) => {
 module.exports.infos = {
     method: "POST",
     path: "/servers/:serverName/players",
-    requireLogin: true
+    requiresAuth: true
 };

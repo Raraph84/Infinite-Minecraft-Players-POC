@@ -34,7 +34,7 @@ class Container extends EventEmitter {
         this.emit(state);
         this.servers.saveState();
         this.servers.gateway.clients
-            .filter((client) => client.infos.logged)
+            .filter((client) => client.metadata.logged)
             .forEach((client) => client.emitEvent("SERVER_STATE", { name: this.name, state: state }));
     }
 
@@ -195,7 +195,7 @@ class Container extends EventEmitter {
         this.gatewayClient = client;
         this.emit("gatewayConnected");
         this.servers.gateway.clients
-            .filter((client) => client.infos.logged)
+            .filter((client) => client.metadata.logged)
             .forEach((client) => client.emitEvent("SERVER_GATEWAY_CONNECTED", { name: this.name }));
         console.log("Container " + this.name + " connected to the gateway.");
     }
@@ -206,7 +206,7 @@ class Container extends EventEmitter {
         this.gatewayClient = null;
         this.emit("gatewayDisconnected");
         this.servers.gateway.clients
-            .filter((client) => client.infos.logged)
+            .filter((client) => client.metadata.logged)
             .forEach((client) => client.emitEvent("SERVER_GATEWAY_DISCONNECTED", { name: this.name }));
         console.log("Container " + this.name + " disconnected from the gateway.");
     }
@@ -288,7 +288,7 @@ class Server extends EventEmitter {
         this.emit(state);
         this.servers.saveState();
         this.servers.gateway.clients
-            .filter((client) => client.infos.logged)
+            .filter((client) => client.metadata.logged)
             .forEach((client) => client.emitEvent("SERVER_STATE", { name: this.name, state: state }));
     }
 
@@ -343,7 +343,7 @@ class Server extends EventEmitter {
         this.gatewayClient = client;
         this.emit("gatewayConnected");
         this.servers.gateway.clients
-            .filter((client) => client.infos.logged)
+            .filter((client) => client.metadata.logged)
             .forEach((client) => client.emitEvent("SERVER_GATEWAY_CONNECTED", { name: this.name }));
         console.log("Container " + this.name + " connected to the gateway.");
     }
@@ -354,7 +354,7 @@ class Server extends EventEmitter {
         this.gatewayClient = null;
         this.emit("gatewayDisconnected");
         this.servers.gateway.clients
-            .filter((client) => client.infos.logged)
+            .filter((client) => client.metadata.logged)
             .forEach((client) => client.emitEvent("SERVER_GATEWAY_DISCONNECTED", { name: this.name }));
         console.log("Container " + this.name + " disconnected from the gateway.");
     }

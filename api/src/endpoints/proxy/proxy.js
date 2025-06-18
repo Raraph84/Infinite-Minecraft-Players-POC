@@ -3,11 +3,11 @@
  * @param {import("../../Servers")} servers
  */
 module.exports.run = async (request, servers) => {
-    request.end(200, servers.proxy.toApiObj(request.logged));
+    request.end(200, servers.proxy.toApiObj(request.metadata.logged));
 };
 
 module.exports.infos = {
     method: "GET",
     path: "/proxy",
-    requireLogin: false
+    requiresAuth: false
 };

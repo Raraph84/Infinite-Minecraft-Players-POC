@@ -4,7 +4,7 @@
  * @param {import("../Servers")} servers
  */
 module.exports.run = async (message, client, servers) => {
-    if (client.infos.logged) {
+    if (client.metadata.logged) {
         client.close("Already logged");
         return;
     }
@@ -41,7 +41,7 @@ module.exports.run = async (message, client, servers) => {
             return;
         }
 
-        client.infos.nodeName = node.name;
+        client.metadata.nodeName = node.name;
         node.gatewayConnected(client);
     } else if (message.type === "server") {
         if (typeof message.server !== "string") {
@@ -55,7 +55,7 @@ module.exports.run = async (message, client, servers) => {
             return;
         }
 
-        client.infos.serverName = server.name;
+        client.metadata.serverName = server.name;
         server.gatewayConnected(client);
     } else if (message.type === "proxy") {
         if (servers.proxy.state !== "started") {
@@ -66,12 +66,12 @@ module.exports.run = async (message, client, servers) => {
         servers.proxy.gatewayConnected(client);
     }
 
-    client.infos.type = message.type;
-    client.infos.logged = true;
+    client.metadata.type = message.type;
+    client.metadata.logged = true;
     client.emitEvent("LOGGED");
 };
 
 module.exports.infos = {
     command: "LOGIN",
-    requireLogin: false
+    requiresAuth: false
 };

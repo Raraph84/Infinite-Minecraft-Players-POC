@@ -37,5 +37,5 @@ module.exports.run = async (request, servers) => {
 module.exports.infos = {
     method: "POST",
     path: "/proxy/players",
-    requireLogin: true
+    requiresAuth: true
 };

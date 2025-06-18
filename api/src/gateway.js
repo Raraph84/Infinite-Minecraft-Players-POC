@@ -14,7 +14,7 @@ const start = async (gateway, servers) => {
 
     gateway.on("connection", (/** @type {import("raraph84-lib/src/WebSocketClient")} */ client) => {
         setTimeout(() => {
-            if (!client.infos.logged) client.close("Please login");
+            if (!client.metadata.logged) client.close("Please login");
         }, 10 * 1000);
     });
 
@@ -26,7 +26,7 @@ const start = async (gateway, servers) => {
             return;
         }
 
-        if (command.infos.requireLogin && !client.infos.logged) {
+        if (command.infos.requiresAuth && !client.metadata.logged) {
             client.close("Please login");
             return;
         }
@@ -35,25 +35,25 @@ const start = async (gateway, servers) => {
     });
 
     gateway.on("close", (/** @type {import("raraph84-lib/src/WebSocketClient")} */ client) => {
-        if (client.infos.type === "server") {
-            const server = servers.servers.find((server) => server.name === client.infos.serverName);
+        if (client.metadata.type === "server") {
+            const server = servers.servers.find((server) => server.name === client.metadata.serverName);
             server.gatewayDisconnected(client);
-        } else if (client.infos.type === "proxy") {
+        } else if (client.metadata.type === "proxy") {
             servers.proxy.gatewayDisconnected(client);
         }
     });
 
     heartbeatInterval = setInterval(() => {
         gateway.clients
-            .filter((client) => client.infos.logged)
+            .filter((client) => client.metadata.logged)
             .forEach((client) => {
-                client.infos.waitingHeartbeat = true;
+                client.metadata.waitingHeartbeat = true;
                 client.emitEvent("HEARTBEAT");
             });
 
         setTimeout(() => {
             gateway.clients
-                .filter((client) => client.infos.waitingHeartbeat)
+                .filter((client) => client.metadata.waitingHeartbeat)
                 .forEach((client) => {
                     client.close("Please reply to the heartbeat");
                 });

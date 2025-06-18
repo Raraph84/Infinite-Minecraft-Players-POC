@@ -4,7 +4,7 @@
  * @param {import("../Servers")} servers
  */
 module.exports.run = async (message, client, servers) => {
-    if (client.infos.type !== "node") {
+    if (client.metadata.type !== "node") {
         client.close("You are not a node client");
         return;
     }
@@ -30,5 +30,5 @@ module.exports.run = async (message, client, servers) => {
 
 module.exports.infos = {
     command: "SERVER_STATE",
-    requireLogin: true
+    requiresAuth: true
 };

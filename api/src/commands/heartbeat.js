@@ -3,15 +3,15 @@
  * @param {import("raraph84-lib/src/WebSocketClient")} client
  */
 module.exports.run = async (message, client) => {
-    if (!client.infos.waitingHeartbeat) {
+    if (!client.metadata.waitingHeartbeat) {
         client.close("Useless heartbeat");
         return;
     }
 
-    client.infos.waitingHeartbeat = false;
+    client.metadata.waitingHeartbeat = false;
 };
 
 module.exports.infos = {
     command: "HEARTBEAT",
-    requireLogin: true
+    requiresAuth: true
 };

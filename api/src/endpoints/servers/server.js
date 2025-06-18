@@ -11,11 +11,11 @@ module.exports.run = async (request, servers) => {
         return;
     }
 
-    request.end(200, server.toApiObj(request.logged));
+    request.end(200, server.toApiObj(request.metadata.logged));
 };
 
 module.exports.infos = {
     method: "GET",
     path: "/servers/:serverName",
-    requireLogin: false
+    requiresAuth: false
 };

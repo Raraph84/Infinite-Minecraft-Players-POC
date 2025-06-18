@@ -78,5 +78,5 @@ module.exports.run = async (request, servers) => {
 module.exports.infos = {
     method: "PUT",
     path: "/proxy/players/:playerUuid/server",
-    requireLogin: true
+    requiresAuth: true
 };

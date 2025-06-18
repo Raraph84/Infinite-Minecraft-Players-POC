@@ -29,7 +29,7 @@ class Node extends EventEmitter {
         this.gatewayClient = client;
         this.emit("gatewayConnected");
         this.gateway.clients
-            .filter((client) => client.infos.logged)
+            .filter((client) => client.metadata.logged)
             .forEach((client) => client.emitEvent("NODE_GATEWAY_CONNECTED", { name: this.name }));
         console.log("Node " + this.name + " connected to the gateway.");
 
@@ -45,7 +45,7 @@ class Node extends EventEmitter {
         this.gatewayClient = null;
         this.emit("gatewayDisconnected");
         this.gateway.clients
-            .filter((client) => client.infos.logged)
+            .filter((client) => client.metadata.logged)
             .forEach((client) => client.emitEvent("NODE_GATEWAY_DISCONNECTED", { name: this.name }));
         console.log("Node " + this.name + " disconnected from the gateway.");
     }

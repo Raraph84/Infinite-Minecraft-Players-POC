@@ -17,5 +17,5 @@ module.exports.run = async (request, servers) => {
 module.exports.infos = {
     method: "DELETE",
     path: "/proxy/players/:playerUuid",
-    requireLogin: true
+    requiresAuth: true
 };

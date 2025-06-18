@@ -40,7 +40,7 @@ class Servers {
         await new Promise((resolve) => server.once("actionCreated", resolve));
 
         this.gateway.clients
-            .filter((client) => client.infos.logged)
+            .filter((client) => client.metadata.logged)
             .forEach((client) => client.emitEvent("SERVER_CREATED", server.toApiObj(true)));
     }
 
@@ -125,7 +125,7 @@ class Servers {
         this.saveState();
 
         this.gateway.clients
-            .filter((client) => client.infos.logged)
+            .filter((client) => client.metadata.logged)
             .forEach((client) => client.emitEvent("SERVER_REMOVED", { name: server.name }));
     }
 
@@ -199,7 +199,7 @@ class Servers {
             await new Promise((resolve) => server.once("actionCreated", resolve));
 
             this.gateway.clients
-                .filter((client) => client.infos.logged)
+                .filter((client) => client.metadata.logged)
                 .forEach((client) => client.emitEvent("SERVER_RESTORED", server.toApiObj(true)));
         }
 

@@ -44,7 +44,7 @@ const start = async (api, gateway, servers) => {
 
         request.urlParams = endpoint.params;
 
-        if (endpoint.infos.requireLogin && !request.headers.authorization) {
+        if (endpoint.infos.requiresAuth && !request.headers.authorization) {
             request.end(401, "Missing authorization");
             return;
         }
@@ -55,7 +55,7 @@ const start = async (api, gateway, servers) => {
                 return;
             }
 
-            request.logged = true;
+            request.metadata.logged = true;
         }
 
         endpoint.run(request, servers);

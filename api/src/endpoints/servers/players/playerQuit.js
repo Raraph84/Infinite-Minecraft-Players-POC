@@ -25,5 +25,5 @@ module.exports.run = async (request, servers) => {
 module.exports.infos = {
     method: "DELETE",
     path: "/servers/:serverName/players/:playerUuid",
-    requireLogin: true
+    requiresAuth: true
 };
