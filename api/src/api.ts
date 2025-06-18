@@ -7,7 +7,8 @@ const config = require("../config.json");
 
 const start = async (api: HttpServer, gateway: WebSocketServer, servers: Servers) => {
     const endpointsFiles = (await fs.readdir(path.join(__dirname, "endpoints"), { recursive: true }))
-        .filter((file) => file.endsWith(".js"))
+        .filter((file) => file.endsWith(".js") || file.endsWith(".ts"))
+        .filter((file, i, files) => file.endsWith(".js") || !files.includes(file.replace(".ts", ".js")))
         .map((command) => require(path.join(__dirname, "endpoints", command)));
 
     api.handleUpgrade("/gateway", gateway);

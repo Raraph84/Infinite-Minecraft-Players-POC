@@ -1,8 +1,7 @@
-/**
- * @param {import("raraph84-lib/src/Request")} request
- * @param {import("../../../Servers")} servers
- */
-module.exports.run = async (request, servers) => {
+import { Request } from "raraph84-lib";
+import Servers from "../../../Servers";
+
+export const run = async (request: Request, servers: Servers) => {
     if (!request.jsonBody) {
         request.end(400, "Invalid JSON");
         return;
@@ -34,7 +33,7 @@ module.exports.run = async (request, servers) => {
     request.end(200, { serverName: availableLobby.name });
 };
 
-module.exports.infos = {
+export const infos = {
     method: "POST",
     path: "/proxy/players",
     requiresAuth: true

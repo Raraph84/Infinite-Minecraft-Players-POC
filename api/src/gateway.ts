@@ -7,7 +7,8 @@ let heartbeatInterval: NodeJS.Timeout | null = null;
 
 const start = async (gateway: WebSocketServer, servers: Servers) => {
     const commandsFiles = (await fs.readdir(path.join(__dirname, "commands"), { recursive: true }))
-        .filter((file) => file.endsWith(".js"))
+        .filter((file) => file.endsWith(".js") || file.endsWith(".ts"))
+        .filter((file, i, files) => file.endsWith(".js") || !files.includes(file.replace(".ts", ".js")))
         .map((command) => require(path.join(__dirname, "commands", command)));
 
     gateway.on("connection", (client) => {

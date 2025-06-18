@@ -1,9 +1,7 @@
-/**
- * @param {object} message
- * @param {import("raraph84-lib/src/WebSocketClient")} client
- * @param {import("../Servers")} servers
- */
-module.exports.run = async (message, client, servers) => {
+import { WebSocketClient } from "raraph84-lib";
+import Servers from "../Servers";
+
+export const run = async (message: any, client: WebSocketClient, servers: Servers) => {
     if (client.metadata.logged) {
         client.close("Already logged");
         return;
@@ -71,7 +69,7 @@ module.exports.run = async (message, client, servers) => {
     client.emitEvent("LOGGED");
 };
 
-module.exports.infos = {
+export const infos = {
     command: "LOGIN",
     requiresAuth: false
 };

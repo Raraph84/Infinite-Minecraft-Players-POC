@@ -1,10 +1,8 @@
-const { Lobby, Game } = require("../../../Containers");
+import { Request } from "raraph84-lib";
+import { Game, Lobby } from "../../../Containers";
+import Servers from "../../../Servers";
 
-/**
- * @param {import("raraph84-lib/src/Request")} request
- * @param {import("../../../Servers")} servers
- */
-module.exports.run = async (request, servers) => {
+export const run = async (request: Request, servers: Servers) => {
     if (!request.jsonBody) {
         request.end(400, "Invalid JSON");
         return;
@@ -75,7 +73,7 @@ module.exports.run = async (request, servers) => {
     request.end(204);
 };
 
-module.exports.infos = {
+export const infos = {
     method: "PUT",
     path: "/proxy/players/:playerUuid/server",
     requiresAuth: true

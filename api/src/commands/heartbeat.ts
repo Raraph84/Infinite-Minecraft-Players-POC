@@ -1,8 +1,6 @@
-/**
- * @param {object} message
- * @param {import("raraph84-lib/src/WebSocketClient")} client
- */
-module.exports.run = async (message, client) => {
+import { WebSocketClient } from "raraph84-lib";
+
+export const run = async (message: any, client: WebSocketClient) => {
     if (!client.metadata.waitingHeartbeat) {
         client.close("Useless heartbeat");
         return;
@@ -11,7 +9,7 @@ module.exports.run = async (message, client) => {
     client.metadata.waitingHeartbeat = false;
 };
 
-module.exports.infos = {
+export const infos = {
     command: "HEARTBEAT",
     requiresAuth: true
 };

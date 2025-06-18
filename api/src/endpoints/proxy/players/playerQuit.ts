@@ -1,8 +1,7 @@
-/**
- * @param {import("raraph84-lib/src/Request")} request
- * @param {import("../../../Servers")} servers
- */
-module.exports.run = async (request, servers) => {
+import { Request } from "raraph84-lib";
+import Servers from "../../../Servers";
+
+export const run = async (request: Request, servers: Servers) => {
     const player = servers.proxy.players.find((player) => player.uuid === request.urlParams.playerUuid);
     if (!player) {
         request.end(400, "This player is already disconnected");
@@ -14,7 +13,7 @@ module.exports.run = async (request, servers) => {
     request.end(204);
 };
 
-module.exports.infos = {
+export const infos = {
     method: "DELETE",
     path: "/proxy/players/:playerUuid",
     requiresAuth: true
