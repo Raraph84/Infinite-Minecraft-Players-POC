@@ -1,4 +1,5 @@
-import { EventEmitter, PassThrough, Readable } from "stream";
+import { PassThrough, Readable } from "stream";
+import EventEmitter from "events";
 import Dockerode from "dockerode";
 
 export default class DockerEventListener extends EventEmitter {

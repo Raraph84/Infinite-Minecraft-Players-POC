@@ -1,5 +1,5 @@
-import { EventEmitter } from "stream";
 import { WebSocketClient } from "raraph84-lib";
+import EventEmitter from "events";
 import Servers from "./Servers";
 import Node from "./Node";
 import path from "path";

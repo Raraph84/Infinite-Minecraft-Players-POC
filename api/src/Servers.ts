@@ -1,11 +1,10 @@
-import { existsSync } from "fs";
+import { promises as fs, existsSync } from "fs";
 import { WebSocketServer } from "raraph84-lib";
 import { Game, Lobby, Proxy, Server } from "./Containers";
 import Dockerode from "dockerode";
 import DockerEventListener from "./DockerEventListener";
 import Node from "./Node";
 import path from "path";
-import fs from "fs/promises";
 
 const config = require("../config.json");
 const stateFile = path.resolve(config.stateFile);
