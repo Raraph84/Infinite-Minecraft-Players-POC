@@ -1,24 +1,22 @@
-const { promises: fs } = require("fs");
-const path = require("path");
+import { WebSocketClient, WebSocketServer } from "raraph84-lib";
+import Servers from "./Servers";
+import fs from "fs/promises";
+import path from "path";
 
-let heartbeatInterval = null;
+let heartbeatInterval: NodeJS.Timeout | null = null;
 
-/**
- * @param {import("raraph84-lib/src/WebSocketServer")} gateway
- * @param {import("./Servers")} servers
- */
-const start = async (gateway, servers) => {
+const start = async (gateway: WebSocketServer, servers: Servers) => {
     const commandsFiles = (await fs.readdir(path.join(__dirname, "commands"), { recursive: true }))
         .filter((file) => file.endsWith(".js"))
         .map((command) => require(path.join(__dirname, "commands", command)));
 
-    gateway.on("connection", (/** @type {import("raraph84-lib/src/WebSocketClient")} */ client) => {
+    gateway.on("connection", (client) => {
         setTimeout(() => {
             if (!client.metadata.logged) client.close("Please login");
         }, 10 * 1000);
     });
 
-    gateway.on("command", (commandName, /** @type {import("raraph84-lib/src/WebSocketClient")} */ client, message) => {
+    gateway.on("command", (commandName, client, message) => {
         const command = commandsFiles.find((command) => command.infos.command === commandName);
 
         if (!command) {
@@ -34,12 +32,15 @@ const start = async (gateway, servers) => {
         command.run(message, client, servers);
     });
 
-    gateway.on("close", (/** @type {import("raraph84-lib/src/WebSocketClient")} */ client) => {
+    gateway.on("close", (client: WebSocketClient) => {
         if (client.metadata.type === "server") {
-            const server = servers.servers.find((server) => server.name === client.metadata.serverName);
-            server.gatewayDisconnected(client);
+            const server = servers.servers.find((server) => server.name === client.metadata.serverName)!;
+            server.gatewayDisconnected();
         } else if (client.metadata.type === "proxy") {
-            servers.proxy.gatewayDisconnected(client);
+            servers.proxy.gatewayDisconnected();
+        } else if (client.metadata.type === "node") {
+            const node = servers.nodes.find((node) => node.name === client.metadata.nodeName)!;
+            node.gatewayDisconnected();
         }
     });
 
@@ -62,7 +63,7 @@ const start = async (gateway, servers) => {
 };
 
 const stop = async () => {
-    clearInterval(heartbeatInterval);
+    clearInterval(heartbeatInterval!);
 };
 
-module.exports = { start, stop };
+export default { start, stop };

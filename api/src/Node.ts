@@ -1,14 +1,16 @@
-const EventEmitter = require("events");
+import { EventEmitter } from "stream";
+import { WebSocketClient, WebSocketServer } from "raraph84-lib";
+import Servers from "./Servers";
 
-class Node extends EventEmitter {
-    /**
-     * @param {string} name
-     * @param {string} host
-     * @param {number} maxMemory
-     * @param {import("raraph84-lib/src/WebSocketServer")} gateway
-     * @param {import("./Servers")} servers
-     */
-    constructor(name, host, maxMemory, gateway, servers) {
+export default class Node extends EventEmitter {
+    name;
+    host;
+    maxMemory;
+    gateway;
+    servers;
+    gatewayClient: WebSocketClient | null = null;
+
+    constructor(name: string, host: string, maxMemory: number, gateway: WebSocketServer, servers: Servers) {
         super();
 
         this.name = name;
@@ -16,15 +18,9 @@ class Node extends EventEmitter {
         this.maxMemory = maxMemory;
         this.gateway = gateway;
         this.servers = servers;
-
-        /** @type {import("raraph84-lib/src/WebSocketClient")} */
-        this.gatewayClient = null;
     }
 
-    /**
-     * @param {import("raraph84-lib/src/WebSocketClient")} client
-     */
-    gatewayConnected(client) {
+    gatewayConnected(client: WebSocketClient) {
         if (this.gatewayClient) this.gatewayClient.close("Another client is already connected");
         this.gatewayClient = client;
         this.emit("gatewayConnected");
@@ -41,7 +37,6 @@ class Node extends EventEmitter {
 
     gatewayDisconnected() {
         if (!this.gatewayClient) throw new Error("No client connected");
-        while (this.players.length > 0) this.playerQuit(this.players[0].uuid);
         this.gatewayClient = null;
         this.emit("gatewayDisconnected");
         this.gateway.clients
@@ -50,5 +45,3 @@ class Node extends EventEmitter {
         console.log("Node " + this.name + " disconnected from the gateway.");
     }
 }
-
-module.exports = Node;

@@ -1,22 +1,17 @@
-const { PassThrough } = require("stream");
-const EventEmitter = require("events");
+import { EventEmitter, PassThrough, Readable } from "stream";
+import Dockerode from "dockerode";
 
-module.exports = class DockerEventListener extends EventEmitter {
-    #stream = null;
+export default class DockerEventListener extends EventEmitter {
+    docker: Dockerode;
+    state: "disconnected" | "connecting" | "connected" | "disconnecting" = "disconnected";
+    #stream: Readable | null = null;
 
-    /**
-     * @param {import("dockerode")} docker
-     */
-    constructor(docker) {
+    constructor(docker: Dockerode) {
         super();
-
         this.docker = docker;
-
-        /** @type {"disconnected"|"connecting"|"connected"|"disconnecting"} */
-        this.state = "disconnected";
     }
 
-    _setState(state) {
+    _setState(state: "disconnected" | "connecting" | "connected" | "disconnecting") {
         this.state = state;
         this.emit(state);
     }
@@ -33,7 +28,7 @@ module.exports = class DockerEventListener extends EventEmitter {
                     return;
                 }
 
-                this.#stream = stream;
+                this.#stream = stream as Readable;
 
                 const parser = new PassThrough();
                 parser.on("data", (data) => {
@@ -55,7 +50,7 @@ module.exports = class DockerEventListener extends EventEmitter {
 
                 this.#stream.pipe(parser);
                 this._setState("connected");
-                resolve();
+                resolve(null);
             });
         });
     }
@@ -63,8 +58,8 @@ module.exports = class DockerEventListener extends EventEmitter {
     disconnect() {
         if (this.state !== "connected") throw new Error("Not connected");
         return new Promise((resolve) => {
-            this.#stream.on("close", () => resolve());
-            this.#stream.destroy();
+            this.#stream!.on("close", () => resolve(null));
+            this.#stream!.destroy();
         });
     }
-};
+}

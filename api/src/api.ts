@@ -1,20 +1,17 @@
-const { promises: fs } = require("fs");
-const { filterEndpointsByPath } = require("raraph84-lib");
-const path = require("path");
+import { filterEndpointsByPath, HttpServer, WebSocketServer } from "raraph84-lib";
+import Servers from "./Servers";
+import fs from "fs/promises";
+import path from "path";
+
 const config = require("../config.json");
 
-/**
- * @param {import("raraph84-lib/src/HttpServer")} api
- * @param {import("raraph84-lib/src/WebSocketServer")} gateway
- * @param {import("./Servers")} servers
- */
-const start = async (api, gateway, servers) => {
+const start = async (api: HttpServer, gateway: WebSocketServer, servers: Servers) => {
     const endpointsFiles = (await fs.readdir(path.join(__dirname, "endpoints"), { recursive: true }))
         .filter((file) => file.endsWith(".js"))
         .map((command) => require(path.join(__dirname, "endpoints", command)));
 
     api.handleUpgrade("/gateway", gateway);
-    api.on("request", async (/** @type {import("raraph84-lib/src/Request")} */ request) => {
+    api.on("request", async (request) => {
         const endpoints = filterEndpointsByPath(endpointsFiles, request);
 
         request.setHeader("Access-Control-Allow-Origin", "*");
@@ -66,11 +63,8 @@ const start = async (api, gateway, servers) => {
     return api;
 };
 
-/**
- * @param {import("raraph84-lib/src/HttpServer")} api
- */
-const stop = async (api) => {
+const stop = async (api: HttpServer) => {
     await api.close();
 };
 
-module.exports = { start, stop };
+export default { start, stop };

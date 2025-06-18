@@ -1,9 +1,11 @@
 import { HttpServer, WebSocketServer } from "raraph84-lib";
 import Dockerode from "dockerode";
+import DockerEventListener from "./src/DockerEventListener";
+import Servers from "./src/Servers";
+import Node from "./src/Node";
+import Api from "./src/api";
+import Gateway from "./src/gateway";
 
-const DockerEventListener = require("./src/DockerEventListener");
-const Servers = require("./src/Servers");
-const Node = require("./src/Node");
 const config = require("./config.json");
 
 require("dotenv").config();
@@ -41,8 +43,8 @@ require("dotenv").config();
 
     console.log("Starting the API...");
     try {
-        await require("./src/api").start(api, gateway, servers);
-        await require("./src/gateway").start(gateway, servers);
+        await Api.start(api, gateway, servers);
+        await Gateway.start(gateway, servers);
     } catch (error) {
         console.log("Cannot start the API/gateway - " + error);
         return;
