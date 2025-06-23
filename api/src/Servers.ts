@@ -1,8 +1,6 @@
 import { promises as fs, existsSync } from "fs";
 import { WebSocketServer } from "raraph84-lib";
 import { Game, Lobby, Proxy, Server } from "./Containers";
-import Dockerode from "dockerode";
-import DockerEventListener from "./DockerEventListener";
 import Node from "./Node";
 import path from "path";
 
@@ -10,12 +8,10 @@ const config = require("../config.json");
 const stateFile = path.resolve(config.stateFile);
 
 export default class Servers {
-    docker;
-    dockerEvents;
     gateway;
     nodes;
 
-    proxy;
+    proxies: Proxy[] = [];
     servers: Server[] = [];
 
     scalingLobbies = false;
@@ -24,13 +20,9 @@ export default class Servers {
     savingState = false;
     needSaveState = false;
 
-    constructor(docker: Dockerode, dockerEvents: DockerEventListener, gateway: WebSocketServer, nodes: Node[]) {
-        this.docker = docker;
-        this.dockerEvents = dockerEvents;
+    constructor(gateway: WebSocketServer, nodes: Node[]) {
         this.gateway = gateway;
         this.nodes = nodes;
-
-        this.proxy = new Proxy(this);
     }
 
     async _startServer(server: Server) {
@@ -131,9 +123,6 @@ export default class Servers {
         this.savingState = true;
 
         const state = {
-            proxy: {
-                state: this.proxy.state
-            },
             servers: this.servers.map((server) => {
                 if (server instanceof Lobby)
                     return {
@@ -167,15 +156,6 @@ export default class Servers {
 
         const state = JSON.parse(await fs.readFile(stateFile, "utf8"));
 
-        const containers = await this.docker.listContainers();
-        if (
-            state.proxy.state === "started" &&
-            containers.some((container) => container.Names[0] === "/" + this.proxy.name)
-        ) {
-            this.dockerEvents.on("rawEvent", this.proxy._bindDockerEventHandler);
-            this.proxy._setState("started");
-        }
-
         for (const serverState of state.servers) {
             const node = this.nodes.find((node) => node.name === serverState.node);
             if (!node) throw new Error(`Node ${serverState.node} not found`);
@@ -184,7 +164,7 @@ export default class Servers {
             let server;
             if (serverState.type === "lobby") server = new Lobby(this, serverState.id, node, serverState.port);
             else if (serverState.type === "game") server = new Game(this, serverState.id, node, serverState.port);
-            else return;
+            else throw new Error(`Unknown server type: ${serverState.type}`);
             this.servers.push(server);
 
             node.gatewayClient.emitEvent("SERVER_ACTION", { action: "create", ...server.toApiObj(true) });
@@ -202,6 +182,8 @@ export default class Servers {
         console.log("Waiting for nodes to reconnect...");
         await new Promise((resolve) => setTimeout(resolve, 4000));
 
+        for (const node of this.nodes) this.proxies.push(new Proxy(this, node));
+
         console.log("Loading state...");
         await this.loadState();
 
@@ -209,7 +191,6 @@ export default class Servers {
         await new Promise((resolve) => setTimeout(resolve, 4000));
 
         console.log("Starting not started servers...");
-        if (this.proxy.state !== "started") await this.proxy.start();
 
         if (config.lobbyServersScalingInterval) {
             await this.scaleLobbies();

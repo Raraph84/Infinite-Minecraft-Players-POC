@@ -26,6 +26,17 @@ require("dotenv").config();
         });
     });
 
+    await new Promise(async (resolve) => {
+        console.log("Pulling openjdk:21 Docker image...");
+        docker.modem.followProgress(await docker.pull("openjdk:21"), (error: any) => {
+            if (error) console.log("Cannot pull openjdk:21 Docker image - " + error);
+            else {
+                console.log("Pulled openjdk:21 Docker image.");
+                resolve(null);
+            }
+        });
+    });
+
     const dockerEvents = new DockerEventListener(docker);
     dockerEvents.on("disconnected", () => {
         console.log("Disconnected from Docker events, exiting.");
@@ -37,6 +48,7 @@ require("dotenv").config();
     console.log("Connected to Docker events.");
 
     const servers = new Servers(docker, dockerEvents);
+    servers.proxy.start();
 
     gateway.init(servers);
 })();

@@ -38,7 +38,8 @@ const start = async (gateway: WebSocketServer, servers: Servers) => {
             const server = servers.servers.find((server) => server.name === client.metadata.serverName)!;
             server.gatewayDisconnected();
         } else if (client.metadata.type === "proxy") {
-            servers.proxy.gatewayDisconnected();
+            const proxy = servers.proxies.find((proxy) => proxy.name === client.metadata.proxyName)!;
+            proxy.gatewayDisconnected();
         } else if (client.metadata.type === "node") {
             const node = servers.nodes.find((node) => node.name === client.metadata.nodeName)!;
             node.gatewayDisconnected();

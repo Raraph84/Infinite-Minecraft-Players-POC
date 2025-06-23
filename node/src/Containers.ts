@@ -6,7 +6,7 @@ import gateway from "./gateway";
 
 const config = require("../config.json");
 
-export class Server extends EventEmitter {
+export abstract class Container extends EventEmitter {
     servers;
     name;
     path;
@@ -16,12 +16,12 @@ export class Server extends EventEmitter {
 
     _bindDockerEventHandler;
 
-    constructor(servers: Servers, name: string, port: number) {
+    constructor(servers: Servers, name: string, path: string, port: number) {
         super();
 
         this.servers = servers;
         this.name = name;
-        this.path = path.join(path.resolve(config.serversDir), name);
+        this.path = path;
         this.port = port;
 
         this._bindDockerEventHandler = this._dockerEventHandler.bind(this);
@@ -30,7 +30,6 @@ export class Server extends EventEmitter {
     _setState(state: "stopped" | "starting" | "started" | "stopping") {
         this.state = state;
         this.emit(state);
-        gateway.getLastWs()!.sendCommand("SERVER_STATE", { name: this.name, state: state });
     }
 
     async _dockerEventHandler(event: any) {
@@ -55,20 +54,11 @@ export class Server extends EventEmitter {
                 else throw error;
             }
         }
-
-        if (existsSync(this.path)) await fs.rm(this.path, { recursive: true });
     }
 
-    async start(memory: number) {
+    async start(...args: any[]) {
+        const [memory, file, java] = args as [number, string, number];
         await this._preStart();
-
-        const configFile = path.join(
-            this.path,
-            "plugins",
-            "Infinite-Minecraft-Players-POC-Server-Plugin",
-            "config.yml"
-        );
-        await fs.writeFile(configFile, (await fs.readFile(configFile, "utf8")).replace("SERVERNAME", this.name));
 
         this.servers.dockerEvents.on("rawEvent", this._bindDockerEventHandler);
 
@@ -77,8 +67,8 @@ export class Server extends EventEmitter {
             ExposedPorts: { "25565/tcp": {} },
             Tty: true,
             OpenStdin: true,
-            Cmd: ["java", "-Xmx" + memory * 1024 + "M", "-jar", "paper.jar"],
-            Image: "openjdk:8",
+            Cmd: ["java", "-Xmx" + memory * 1024 + "M", "-jar", file],
+            Image: "openjdk:" + java,
             WorkingDir: "/home/server",
             HostConfig: {
                 PortBindings: {
@@ -99,13 +89,14 @@ export class Server extends EventEmitter {
         console.log("Container " + this.name + " started.");
     }
 
-    async stop() {
+    async stop(...args: any[]) {
+        const [command] = args as [string];
         if (this.state !== "started") throw new Error("Not started");
         this._setState("stopping");
 
         console.log("Stopping container " + this.name + "...");
 
-        await this._send("stop");
+        await this._send(command);
 
         const killTimeout = setTimeout(() => this.kill(), 30 * 1000);
 
@@ -128,7 +119,7 @@ export class Server extends EventEmitter {
         if (!restart) console.log("Container " + this.name + " stopped.");
         else {
             console.log("Container " + this.name + " stopped, restarting...");
-            this.start(0);
+            this.start();
         }
     }
 
@@ -148,6 +139,71 @@ export class Server extends EventEmitter {
         if (this.state === "stopped") throw new Error("Already stopped");
 
         await this.servers.docker.getContainer(this.name).kill();
+    }
+}
+
+export class Proxy extends Container {
+    constructor(servers: Servers) {
+        super(servers, "proxy-" + config.nodeName, path.resolve(config.proxyDir), config.proxyPort);
+    }
+
+    _setState(state: "stopped" | "starting" | "started" | "stopping"): void {
+        super._setState(state);
+        gateway.getLastWs()?.sendCommand("PROXY_STATE", { name: this.name, state: state });
+    }
+
+    async _preStart() {
+        await super._preStart();
+
+        const configFile = path.join(
+            this.path,
+            "plugins",
+            "infinite-minecraft-players-poc-proxy-plugin",
+            "config.json"
+        );
+        await fs.writeFile(configFile, (await fs.readFile(configFile, "utf8")).replace("PROXYNAME", this.name));
+    }
+
+    async start() {
+        await super.start(config.proxyMemory, "velocity.jar", 21);
+    }
+
+    async stop() {
+        await super.stop("end");
+    }
+}
+
+export abstract class Server extends Container {
+    constructor(servers: Servers, name: string, port: number) {
+        super(servers, name, path.join(path.resolve(config.serversDir), name), port);
+    }
+
+    _setState(state: "stopped" | "starting" | "started" | "stopping"): void {
+        super._setState(state);
+        gateway.getLastWs()!.sendCommand("SERVER_STATE", { name: this.name, state: state });
+    }
+
+    async _preStart() {
+        await super._preStart();
+
+        if (existsSync(this.path)) await fs.rm(this.path, { recursive: true });
+
+        const configFile = path.join(
+            this.path,
+            "plugins",
+            "Infinite-Minecraft-Players-POC-Server-Plugin",
+            "config.yml"
+        );
+        await fs.writeFile(configFile, (await fs.readFile(configFile, "utf8")).replace("SERVERNAME", this.name));
+    }
+
+    async start(...args: any[]) {
+        const [memory] = args as [number];
+        await super.start(memory, "paper.jar", 8);
+    }
+
+    async stop() {
+        await super.stop("stop");
     }
 }
 

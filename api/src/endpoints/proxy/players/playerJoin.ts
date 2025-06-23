@@ -17,8 +17,16 @@ export const run = async (request: Request, servers: Servers) => {
         return;
     }
 
-    if (servers.proxy.players.some((player) => player.uuid === request.jsonBody.uuid)) {
-        request.end(400, "This player is already connected");
+    const proxy = servers.proxies.find(
+        (proxy) => proxy.name.toLowerCase() === request.urlParams.proxyName.toLowerCase()
+    );
+    if (!proxy) {
+        request.end(400, "This proxy does not exist");
+        return;
+    }
+
+    if (servers.proxies.some((proxy) => proxy.players.some((player) => player.uuid === request.jsonBody.uuid))) {
+        request.end(400, "This player is already connected to a proxy");
         return;
     }
 
@@ -28,13 +36,13 @@ export const run = async (request: Request, servers: Servers) => {
         return;
     }
 
-    servers.proxy.playerJoin(request.jsonBody.uuid, request.jsonBody.username);
+    proxy.playerJoin(request.jsonBody.uuid, request.jsonBody.username);
 
     request.end(200, { serverName: availableLobby.name });
 };
 
 export const infos = {
     method: "POST",
-    path: "/proxy/players",
+    path: "/proxies/:proxyName/players",
     requiresAuth: true
 };

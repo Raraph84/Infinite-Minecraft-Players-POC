@@ -1,6 +1,9 @@
 {
     "apiHost": "172.17.0.1:8080",
     "nodeName": "node01",
+    "proxyDir": "../proxy",
+    "proxyMemory": 4,
+    "proxyPort": 25565,
     "serversDir": "../servers",
     "lobbyServerTemplateDir": "../server-template",
     "lobbyServerMemory": 4,

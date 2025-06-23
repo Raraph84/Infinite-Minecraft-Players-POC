@@ -56,12 +56,18 @@ export const run = async (message: any, client: WebSocketClient, servers: Server
         client.metadata.serverName = server.name;
         server.gatewayConnected(client);
     } else if (message.type === "proxy") {
-        if (servers.proxy.state !== "started") {
-            client.close("Proxy is not started");
+        if (typeof message.proxy !== "string") {
+            client.close("Proxy must be a string");
             return;
         }
 
-        servers.proxy.gatewayConnected(client);
+        const proxy = servers.proxies.find((proxy) => proxy.name === message.proxy);
+        if (!proxy) {
+            client.close("Unknown proxy");
+            return;
+        }
+
+        proxy.gatewayConnected(client);
     }
 
     client.metadata.type = message.type;

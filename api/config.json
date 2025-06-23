@@ -1,8 +1,5 @@
 {
     "port": 8080,
-    "proxyDir": "../proxy",
-    "proxyMemory": 4,
-    "proxyPort": 25565,
     "serversStartingPort": 25000,
     "lobbyServersScalingInterval": 5000,
     "lobbyServerMemory": 4,

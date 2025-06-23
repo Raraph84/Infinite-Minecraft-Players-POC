@@ -17,16 +17,16 @@ export const run = async (message: any, client: WebSocketClient, servers: Server
         return;
     }
 
-    const server = servers.servers.find((server) => server.name === message.name);
-    if (!server) {
-        client.close("Unknown server");
+    const proxy = servers.proxies.find((proxy) => proxy.name === message.name);
+    if (!proxy) {
+        client.close("Unknown proxy");
         return;
     }
 
-    server._setState(message.state);
+    proxy._setState(message.state);
 };
 
 export const infos = {
-    command: "SERVER_STATE",
+    command: "PROXY_STATE",
     requiresAuth: true
 };

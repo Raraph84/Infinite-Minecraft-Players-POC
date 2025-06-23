@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "dev": "ts-node-dev index.js",
+    "dev": "ts-node-dev index.ts",
     "build": "tsc",
     "start": "node index.js",
     "format": "prettier --write **/*.{js,ts,json}"

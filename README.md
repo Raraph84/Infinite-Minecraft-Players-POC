@@ -127,7 +127,3 @@ WorldEdit is not required but useful to have on every server
 You can build WorldEdit on [its repository](https://github.com/EngineHub/WorldEdit)  
 Or download it on [its Modrinth page](https://modrinth.com/plugin/worldedit)  
 And replace it in `server-template/plugins/`
-
-## TODO
-
--   Scale proxies

@@ -30,7 +30,7 @@ public class API {
         body.addProperty("uuid", uuid.toString());
         body.addProperty("username", username);
 
-        HttpRequest req = new HttpRequest(Config.apiHost + "/proxy/players").setMethod("POST").setBody(body);
+        HttpRequest req = new HttpRequest(Config.apiHost + "/proxies/" + Config.proxyName + "/players").setMethod("POST").setBody(body);
         JsonObject res = sendRequest(req, "No server available");
 
         return res.get("serverName").getAsString();
@@ -38,7 +38,7 @@ public class API {
 
     public static void proxyPlayerQuit(UUID uuid) {
 
-        HttpRequest req = new HttpRequest(Config.apiHost + "/proxy/players/" + uuid.toString()).setMethod("DELETE");
+        HttpRequest req = new HttpRequest(Config.apiHost + "/proxies/" + Config.proxyName + "/players/" + uuid.toString()).setMethod("DELETE");
         sendNoContentRequest(req, "This player is already disconnected");
     }
 

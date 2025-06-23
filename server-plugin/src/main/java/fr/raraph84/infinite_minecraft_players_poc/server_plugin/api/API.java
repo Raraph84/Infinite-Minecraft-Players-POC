@@ -30,7 +30,7 @@ public class API {
         JsonObject body = new JsonObject();
         body.addProperty("serverName", serverName);
 
-        HttpRequest req = new HttpRequest(Config.getApiHost() + "/proxy/players/" + uuid.toString() + "/server").setMethod("PUT").setBody(body);
+        HttpRequest req = new HttpRequest(Config.getApiHost() + "/players/" + uuid.toString() + "/server").setMethod("PUT").setBody(body);
         sendNoContentRequest(req, "No server available");
     }
 

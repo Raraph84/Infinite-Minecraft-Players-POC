@@ -2,11 +2,19 @@ import { Request } from "raraph84-lib";
 import Servers from "../../../Servers";
 
 export const run = async (request: Request, servers: Servers) => {
-    request.end(200, { players: servers.proxy.players });
+    const proxy = servers.proxies.find(
+        (proxy) => proxy.name.toLowerCase() === request.urlParams.proxyName.toLowerCase()
+    );
+    if (!proxy) {
+        request.end(400, "This proxy does not exist");
+        return;
+    }
+
+    request.end(200, { players: proxy.players });
 };
 
 export const infos = {
     method: "GET",
-    path: "/proxy/players",
+    path: "/proxies/:proxyName/players",
     requiresAuth: false
 };

@@ -12,6 +12,7 @@ public class Config {
     public static File jsonFile;
     public static String apiHost;
     public static String apiKey;
+    public static String proxyName;
 
     public static void init() {
         jsonFile = InfinityPlugin.getInstance().getDataDirectory().resolve("config.json").toFile();
@@ -21,6 +22,7 @@ public class Config {
             JsonObject jsonObject = JsonParser.parseString(json).getAsJsonObject();
             apiHost = jsonObject.get("apiHost").getAsString();
             apiKey = jsonObject.get("apiKey").getAsString();
+            proxyName = jsonObject.get("proxyName").getAsString();
         } catch (IOException e) {
             throw new RuntimeException("Could not load config file", e);
         }

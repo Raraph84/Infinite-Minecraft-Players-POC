@@ -1,18 +1,17 @@
 import { Request } from "raraph84-lib";
-import { Game, Lobby } from "../../../Containers";
-import Servers from "../../../Servers";
+import { Game, Lobby } from "../../Containers";
+import Servers from "../../Servers";
 
 export const run = async (request: Request, servers: Servers) => {
-    if (!request.jsonBody) {
-        request.end(400, "Invalid JSON");
-        return;
-    }
-
-    const player = servers.proxy.players.find((player) => player.uuid === request.urlParams.playerUuid);
-    if (!player) {
+    const proxy = servers.proxies.find((proxy) =>
+        proxy.players.find((player) => player.uuid === request.urlParams.playerUuid)
+    );
+    if (!proxy) {
         request.end(400, "This player is not connected");
         return;
     }
+
+    const player = proxy.players.find((player) => player.uuid === request.urlParams.playerUuid)!;
 
     if (typeof request.jsonBody.serverName !== "string") {
         request.end(400, "Server name must be a string");
@@ -63,18 +62,18 @@ export const run = async (request: Request, servers: Servers) => {
         }
     }
 
-    if (!servers.proxy.gatewayClient) {
+    if (!proxy.gatewayClient) {
         request.end(502, "Proxy is not connected to the gateway");
         return;
     }
 
-    servers.proxy.gatewayClient.emitEvent("CONNECT_PLAYER", { playerUuid: player.uuid, serverName: server.name });
+    proxy.gatewayClient.emitEvent("CONNECT_PLAYER", { playerUuid: player.uuid, serverName: server.name });
 
     request.end(204);
 };
 
 export const infos = {
     method: "PUT",
-    path: "/proxy/players/:playerUuid/server",
+    path: "/players/:playerUuid/server",
     requiresAuth: true
 };
