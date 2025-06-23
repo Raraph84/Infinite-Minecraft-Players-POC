@@ -214,7 +214,7 @@ export abstract class Server extends Container {
 
     async start(...args: any[]) {
         const [memory] = args as [number];
-        await super.start(memory, "paper.jar", 8);
+        await super.start(memory, "spigot.jar", 8);
     }
 
     async stop() {
