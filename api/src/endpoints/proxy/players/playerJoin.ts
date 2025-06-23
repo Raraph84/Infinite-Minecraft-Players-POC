@@ -30,7 +30,7 @@ export const run = async (request: Request, servers: Servers) => {
         return;
     }
 
-    const availableLobby = servers.getAvailableLobby(request.jsonBody.uuid);
+    const availableLobby = servers.getAvailableLobby(request.jsonBody.uuid, proxy);
     if (!availableLobby) {
         request.end(400, "No server available");
         return;

@@ -15,7 +15,10 @@ public class PlayerJoinQuitListener {
         try {
             server = API.proxyPlayerJoin(event.getPlayer().getUniqueId(), event.getPlayer().getUsername());
         } catch (RuntimeException exception) {
-            // TODO Handle already connected (@azrotho pls)
+            if (exception.getMessage().equals("You are already connected to a proxy")) {
+                event.getPlayer().disconnect(Component.text("You are already connected to the server.").color(TextColor.color(0x801818)));
+                return;
+            }
             if (exception.getMessage().equals("No server available")) {
                 event.getPlayer().disconnect(Component.text("There is no server available at the moment, please try again later.").color(TextColor.color(0x801818)));
                 return;

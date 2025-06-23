@@ -61,20 +61,29 @@ export default class Servers {
         return server;
     }
 
-    getAvailableLobby(playerUuid: string) {
+    getAvailableLobby(playerUuid: string, proxy?: Proxy | null) {
         const pcount = (server: Server) => server.players.length + server.connectingPlayers.length;
-        const availableLobbies = this.servers.filter((server) => server instanceof Lobby && server.gatewayClient);
+        const availableLobbies = this.servers.filter(
+            (server) => server instanceof Lobby && server.gatewayClient && pcount(server) < config.lobbyMaxPlayers
+        );
 
-        let availableLobby = availableLobbies.find((server) => pcount(server) < config.lobbyPlayers);
-        if (!availableLobby) {
-            availableLobbies.sort((a, b) => pcount(a) - pcount(b));
-            availableLobby = availableLobbies.find((server) => pcount(server) < config.lobbyMaxPlayers);
-        }
+        let preferredLobbies: Server[] = [];
+        if (!preferredLobbies.length && proxy)
+            preferredLobbies = availableLobbies.filter(
+                (server) => server.node === proxy.node && pcount(server) < config.lobbyPlayers
+            );
+        if (!preferredLobbies.length)
+            preferredLobbies = availableLobbies.filter((server) => pcount(server) < config.lobbyPlayers);
+        if (!preferredLobbies.length && proxy)
+            preferredLobbies = availableLobbies.filter((server) => server.node === proxy.node);
+        if (!preferredLobbies.length) preferredLobbies = availableLobbies;
 
-        if (availableLobby) availableLobby.playerConnecting(playerUuid);
-        if (!availableLobby) console.log("Cannot find available lobby server");
+        preferredLobbies.sort((a, b) => pcount(a) - pcount(b));
+        const lobby = preferredLobbies[0];
 
-        return availableLobby || null;
+        if (lobby) lobby.playerConnecting(playerUuid);
+        if (!lobby) console.log("Cannot find available lobby server");
+        return lobby ?? null;
     }
 
     async startGameServer() {
