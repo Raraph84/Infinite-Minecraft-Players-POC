@@ -1,5 +1,5 @@
 {
-    "apiHost": "172.17.0.1:8080",
+    "apiHost": "http://172.17.0.1:8080",
     "nodeName": "node01",
     "proxyDir": "../proxy",
     "proxyMemory": 4,

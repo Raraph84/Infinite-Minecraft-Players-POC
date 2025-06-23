@@ -13,7 +13,7 @@ const init = async (servers: Servers) => {
     let connected = false;
 
     const connect = () => {
-        const ws = new WebSocket("ws://" + config.apiHost + "/gateway", { handshakeTimeout: 5000 }) as Ws;
+        const ws = new WebSocket(config.apiHost.replace("http", "ws") + "/gateway", { handshakeTimeout: 5000 }) as Ws;
         ws.sendCommand = (command, message = {}) => {
             //console.log("->", { command, ...message });
             ws.send(JSON.stringify({ command, ...message }));

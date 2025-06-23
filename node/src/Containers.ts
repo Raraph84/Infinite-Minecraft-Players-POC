@@ -161,7 +161,15 @@ export class Proxy extends Container {
             "infinite-minecraft-players-poc-proxy-plugin",
             "config.json"
         );
-        await fs.writeFile(configFile, (await fs.readFile(configFile, "utf8")).replace("PROXYNAME", this.name));
+        await fs.mkdir(path.dirname(configFile), { recursive: true });
+        await fs.writeFile(
+            configFile,
+            JSON.stringify({
+                proxyName: this.name,
+                apiKey: process.env.API_KEY,
+                apiHost: config.apiHost
+            })
+        );
     }
 
     async start() {
@@ -183,10 +191,13 @@ export abstract class Server extends Container {
         gateway.getLastWs()!.sendCommand("SERVER_STATE", { name: this.name, state: state });
     }
 
-    async _preStart() {
+    async _preStart(...args: any[]) {
+        const [templateDir] = args as [string];
+
         await super._preStart();
 
         if (existsSync(this.path)) await fs.rm(this.path, { recursive: true });
+        await fs.cp(path.resolve(templateDir), this.path, { recursive: true });
 
         const configFile = path.join(
             this.path,
@@ -194,7 +205,11 @@ export abstract class Server extends Container {
             "Infinite-Minecraft-Players-POC-Server-Plugin",
             "config.yml"
         );
-        await fs.writeFile(configFile, (await fs.readFile(configFile, "utf8")).replace("SERVERNAME", this.name));
+        await fs.mkdir(path.dirname(configFile), { recursive: true });
+        await fs.writeFile(
+            configFile,
+            `servername: ${this.name}\napikey: ${process.env.API_KEY}\napihost: ${config.apiHost}`
+        );
     }
 
     async start(...args: any[]) {
@@ -216,8 +231,7 @@ export class Lobby extends Server {
     }
 
     async _preStart() {
-        await super._preStart();
-        await fs.cp(path.resolve(config.lobbyServerTemplateDir), this.path, { recursive: true });
+        await super._preStart(config.lobbyServerTemplateDir);
     }
 
     async start() {
@@ -234,8 +248,7 @@ export class Game extends Server {
     }
 
     async _preStart() {
-        await super._preStart();
-        await fs.cp(path.resolve(config.gameServerTemplateDir), this.path, { recursive: true });
+        await super._preStart(config.gameServerTemplateDir);
     }
 
     async start() {

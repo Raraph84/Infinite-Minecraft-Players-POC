@@ -25,11 +25,7 @@ alpine/git clone https://github.com/Raraph84/Infinite-Minecraft-Players-POC.git 
 
 ### Step 2 : Set the API key
 
-Generate a random string of the length of your choice (100 is good) and replace `exampleapikey` to the one you generated in theses files :
-
--   `api/.env` and `node/.env`
--   `proxy/plugins/infinite-minecraft-players-poc-proxy-plugin/config.json`
--   `server-template/plugins/Infinite-Minecraft-Players-POC-Server-Plugin/config.yml`
+Generate a random string of the length of your choice (100 is good) and replace `exampleapikey` to the one you generated in the files `api/.env` and `node/.env`
 
 ### Step 3 : Install the libs and compile
 
