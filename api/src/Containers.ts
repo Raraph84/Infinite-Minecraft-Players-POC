@@ -85,6 +85,22 @@ export class Proxy extends Container {
     constructor(servers: Servers, node: Node) {
         super(servers, "proxy-" + node.name, node);
     }
+
+    playerJoin(uuid: string, username: string) {
+        super.playerJoin(uuid, username);
+        const playerCount = this.servers.proxies.reduce((count, proxy) => count + proxy.players.length, 0);
+        this.servers.gateway.clients
+            .filter((client) => client.metadata.logged)
+            .forEach((client) => client.emitEvent("PLAYER_COUNT", { count: playerCount }));
+    }
+
+    playerQuit(uuid: string) {
+        super.playerQuit(uuid);
+        const playerCount = this.servers.proxies.reduce((count, proxy) => count + proxy.players.length, 0);
+        this.servers.gateway.clients
+            .filter((client) => client.metadata.logged)
+            .forEach((client) => client.emitEvent("PLAYER_COUNT", { count: playerCount }));
+    }
 }
 
 export abstract class Server extends Container {

@@ -67,6 +67,7 @@ export const run = async (message: any, client: WebSocketClient, servers: Server
             return;
         }
 
+        client.metadata.proxyName = proxy.name;
         proxy.gatewayConnected(client);
     }
 
