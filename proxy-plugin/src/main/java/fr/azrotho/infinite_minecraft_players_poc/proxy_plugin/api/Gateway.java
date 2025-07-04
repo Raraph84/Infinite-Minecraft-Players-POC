@@ -143,6 +143,11 @@ public class Gateway {
                     player.createConnectionRequest(server).fireAndForget();
                     break;
                 }
+                case "PLAYER_COUNT": {
+                    int count = message.get("count").getAsInt();
+                    InfinityPlugin.getInstance().setConnectedPlayerCount(count);
+                    break;
+                }
             }
         }
 
