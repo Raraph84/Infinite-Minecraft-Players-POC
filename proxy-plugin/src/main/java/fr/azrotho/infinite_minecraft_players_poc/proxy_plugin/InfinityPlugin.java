@@ -22,6 +22,8 @@ public class InfinityPlugin {
     private final Logger logger;
     private final Path dataDirectory;
     private static InfinityPlugin instance;
+    
+    private int connectedPlayerCount = 0;
 
     @Inject
     public InfinityPlugin(ProxyServer server, Logger logger, @DataDirectory Path dataDirectory) {
@@ -62,5 +64,13 @@ public class InfinityPlugin {
 
     public Path getDataDirectory() {
         return dataDirectory;
+    }
+
+    public int getConnectedPlayerCount() {
+        return connectedPlayerCount;
+    }
+
+    public void setConnectedPlayerCount(int nbPlayerConnected) {
+        this.connectedPlayerCount = nbPlayerConnected;
     }
 }
