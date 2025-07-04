@@ -16,7 +16,7 @@ public class ProxyPingListener {
 
         ServerPing.Builder builder = event.getPing().asBuilder();
         builder.maximumPlayers(maxPlayers);
-        builder.onlinePlayers(InfinityPlugin.getNbPlayerConnected());
+        builder.onlinePlayers(InfinityPlugin.getInstance().getConnectedPlayerCount());
 
         event.setPing(builder.build());
     }

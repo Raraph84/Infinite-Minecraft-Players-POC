@@ -144,7 +144,7 @@ public class Gateway {
                 }
                 case "PLAYER_COUNT": {
                     int count = message.get("count").getAsInt();
-                    InfinityPlugin.setNbPlayerConnected(count);
+                    InfinityPlugin.getInstance().setConnectedPlayerCount(count);
                     break;
                 }
             }

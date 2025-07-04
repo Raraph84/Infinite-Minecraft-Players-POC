@@ -23,7 +23,7 @@ public class InfinityPlugin {
     private final Path dataDirectory;
     private static InfinityPlugin instance;
     
-    private static int nbPlayerConnected = 0;
+    private int connectedPlayerCount = 0;
 
     @Inject
     public InfinityPlugin(ProxyServer server, Logger logger, @DataDirectory Path dataDirectory) {
@@ -66,11 +66,11 @@ public class InfinityPlugin {
         return dataDirectory;
     }
 
-    public static int getNbPlayerConnected() {
-        return nbPlayerConnected;
+    public int getConnectedPlayerCount() {
+        return connectedPlayerCount;
     }
 
-    public static void setNbPlayerConnected(int nbPlayerConnected) {
-        InfinityPlugin.nbPlayerConnected = nbPlayerConnected;
+    public void setConnectedPlayerCount(int nbPlayerConnected) {
+        this.connectedPlayerCount = nbPlayerConnected;
     }
 }
