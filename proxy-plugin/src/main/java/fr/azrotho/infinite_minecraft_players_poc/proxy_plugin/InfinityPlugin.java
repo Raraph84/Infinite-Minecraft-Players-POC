@@ -70,7 +70,7 @@ public class InfinityPlugin {
         return connectedPlayerCount;
     }
 
-    public void setConnectedPlayerCount(int nbPlayerConnected) {
-        this.connectedPlayerCount = nbPlayerConnected;
+    public void setConnectedPlayerCount(int connectedPlayerCount) {
+        this.connectedPlayerCount = connectedPlayerCount;
     }
 }
