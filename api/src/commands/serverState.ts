@@ -1,10 +1,8 @@
-/**
- * @param {object} message
- * @param {import("raraph84-lib/src/WebSocketClient")} client
- * @param {import("../Servers")} servers
- */
-module.exports.run = async (message, client, servers) => {
-    if (client.infos.type !== "node") {
+import { WebSocketClient } from "raraph84-lib";
+import Servers from "../Servers";
+
+export const run = async (message: any, client: WebSocketClient, servers: Servers) => {
+    if (client.metadata.type !== "node") {
         client.close("You are not a node client");
         return;
     }
@@ -28,7 +26,7 @@ module.exports.run = async (message, client, servers) => {
     server.setState(message.state);
 };
 
-module.exports.infos = {
+export const infos = {
     command: "SERVER_STATE",
-    requireLogin: true
+    requiresAuth: true
 };

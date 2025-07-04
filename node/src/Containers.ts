@@ -1,15 +1,22 @@
-const { promises: fs, existsSync } = require("fs");
-const EventEmitter = require("events");
-const path = require("path");
+import { promises as fs, existsSync } from "fs";
+import EventEmitter from "events";
+import Servers from "./Servers";
+import path from "path";
+import gateway from "./gateway";
+
 const config = require("../config.json");
 
-class Server extends EventEmitter {
-    /**
-     * @param {import("./Servers")} servers
-     * @param {string} name
-     * @param {number} port
-     */
-    constructor(servers, name, port) {
+export class Server extends EventEmitter {
+    servers;
+    name;
+    path;
+    port;
+
+    state: "stopped" | "starting" | "started" | "stopping" = "stopped";
+
+    _bindDockerEventHandler;
+
+    constructor(servers: Servers, name: string, port: number) {
         super();
 
         this.servers = servers;
@@ -17,25 +24,16 @@ class Server extends EventEmitter {
         this.path = path.join(path.resolve(config.serversDir), name);
         this.port = port;
 
-        /** @type {"stopped"|"starting"|"started"|"stopping"} */
-        this.state = "stopped";
-
         this._bindDockerEventHandler = this._dockerEventHandler.bind(this);
     }
 
-    /**
-     * @param {"stopped"|"starting"|"started"|"stopping"} state
-     */
-    _setState(state) {
+    _setState(state: "stopped" | "starting" | "started" | "stopping") {
         this.state = state;
         this.emit(state);
-        require("./gateway").getLastWs().sendCommand("SERVER_STATE", { name: this.name, state: state });
+        gateway.getLastWs()!.sendCommand("SERVER_STATE", { name: this.name, state: state });
     }
 
-    /**
-     * @param {object} event
-     */
-    async _dockerEventHandler(event) {
+    async _dockerEventHandler(event: any) {
         if (event.Type !== "container" || event.Actor.Attributes.name !== this.name) return;
 
         if (event.Action === "start") this._postStart();
@@ -51,7 +49,7 @@ class Server extends EventEmitter {
         while (true) {
             try {
                 await this.servers.docker.getContainer(this.name).remove({ force: true });
-            } catch (error) {
+            } catch (error: any) {
                 if (error.statusCode === 404) break;
                 else if (error.statusCode === 409) continue;
                 else throw error;
@@ -61,10 +59,7 @@ class Server extends EventEmitter {
         if (existsSync(this.path)) await fs.rm(this.path, { recursive: true });
     }
 
-    /**
-     * @param {number} memory
-     */
-    async start(memory) {
+    async start(memory: number) {
         await this._preStart();
 
         const configFile = path.join(
@@ -117,7 +112,7 @@ class Server extends EventEmitter {
         await new Promise((resolve) =>
             this.once("stopped", () => {
                 clearTimeout(killTimeout);
-                resolve();
+                resolve(null);
             })
         );
     }
@@ -133,25 +128,18 @@ class Server extends EventEmitter {
         if (!restart) console.log("Container " + this.name + " stopped.");
         else {
             console.log("Container " + this.name + " stopped, restarting...");
-            this.start();
+            this.start(0);
         }
     }
 
-    /**
-     * @param {string} content
-     */
-    async _send(content) {
+    async _send(content: string) {
         const container = this.servers.docker.getContainer(this.name);
         const stream = await container.attach({ stream: true, stdin: true });
 
         await new Promise(async (resolve, reject) => {
             stream.write(content + "\n", (error) => {
                 if (error) reject(error);
-                else
-                    stream.end((error) => {
-                        if (error) reject(error);
-                        else resolve();
-                    });
+                else stream.end(() => resolve(null));
             });
         });
     }
@@ -163,13 +151,10 @@ class Server extends EventEmitter {
     }
 }
 
-class Lobby extends Server {
-    /**
-     * @param {import("./Servers")} servers
-     * @param {number} id
-     * @param {number} port
-     */
-    constructor(servers, id, port) {
+export class Lobby extends Server {
+    id;
+
+    constructor(servers: Servers, id: number, port: number) {
         super(servers, "lobby" + id, port);
         this.id = id;
     }
@@ -184,13 +169,10 @@ class Lobby extends Server {
     }
 }
 
-class Game extends Server {
-    /**
-     * @param {import("./Servers")} servers
-     * @param {number} id
-     * @param {number} port
-     */
-    constructor(servers, id, port) {
+export class Game extends Server {
+    id;
+
+    constructor(servers: Servers, id: number, port: number) {
         super(servers, "game" + id, port);
         this.id = id;
     }
@@ -204,5 +186,3 @@ class Game extends Server {
         await super.start(config.gameServerMemory);
     }
 }
-
-module.exports = { Server, Lobby, Game };

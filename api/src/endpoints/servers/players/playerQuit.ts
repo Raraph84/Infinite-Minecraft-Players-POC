@@ -1,8 +1,7 @@
-/**
- * @param {import("raraph84-lib/src/Request")} request
- * @param {import("../../../Servers")} servers
- */
-module.exports.run = async (request, servers) => {
+import { Request } from "raraph84-lib";
+import Servers from "../../../Servers";
+
+export const run = async (request: Request, servers: Servers) => {
     const server = servers.servers.find(
         (server) => server.name.toLowerCase() === request.urlParams.serverName.toLowerCase()
     );
@@ -22,8 +21,8 @@ module.exports.run = async (request, servers) => {
     request.end(204);
 };
 
-module.exports.infos = {
+export const infos = {
     method: "DELETE",
     path: "/servers/:serverName/players/:playerUuid",
-    requireLogin: true
+    requiresAuth: true
 };

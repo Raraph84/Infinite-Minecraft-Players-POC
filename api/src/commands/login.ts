@@ -1,10 +1,8 @@
-/**
- * @param {object} message
- * @param {import("raraph84-lib/src/WebSocketClient")} client
- * @param {import("../Servers")} servers
- */
-module.exports.run = async (message, client, servers) => {
-    if (client.infos.logged) {
+import { WebSocketClient } from "raraph84-lib";
+import Servers from "../Servers";
+
+export const run = async (message: any, client: WebSocketClient, servers: Servers) => {
+    if (client.metadata.logged) {
         client.close("Already logged");
         return;
     }
@@ -41,7 +39,7 @@ module.exports.run = async (message, client, servers) => {
             return;
         }
 
-        client.infos.nodeName = node.name;
+        client.metadata.nodeName = node.name;
         node.gatewayConnected(client);
     } else if (message.type === "server") {
         if (typeof message.server !== "string") {
@@ -55,7 +53,7 @@ module.exports.run = async (message, client, servers) => {
             return;
         }
 
-        client.infos.serverName = server.name;
+        client.metadata.serverName = server.name;
         server.gatewayConnected(client);
     } else if (message.type === "proxy") {
         if (servers.proxy.state !== "started") {
@@ -66,12 +64,12 @@ module.exports.run = async (message, client, servers) => {
         servers.proxy.gatewayConnected(client);
     }
 
-    client.infos.type = message.type;
-    client.infos.logged = true;
+    client.metadata.type = message.type;
+    client.metadata.logged = true;
     client.emitEvent("LOGGED");
 };
 
-module.exports.infos = {
+export const infos = {
     command: "LOGIN",
-    requireLogin: false
+    requiresAuth: false
 };

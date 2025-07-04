@@ -1,15 +1,24 @@
-const EventEmitter = require("events");
-const path = require("path");
+import { WebSocketClient } from "raraph84-lib";
+import EventEmitter from "events";
+import Servers from "./Servers";
+import Node from "./Node";
+import path from "path";
+
 const config = require("../config.json");
 
-class Container extends EventEmitter {
-    /**
-     * @param {import("./Servers")} servers
-     * @param {string} name
-     * @param {string} path
-     * @param {number} port
-     */
-    constructor(servers, name, path, port) {
+export class Container extends EventEmitter {
+    servers;
+    name;
+    path;
+    port;
+
+    state: "stopped" | "starting" | "started" | "stopping" = "stopped";
+    players: Player[] = [];
+    gatewayClient: WebSocketClient | null = null;
+
+    _bindDockerEventHandler;
+
+    constructor(servers: Servers, name: string, path: string, port: number) {
         super();
 
         this.servers = servers;
@@ -17,31 +26,19 @@ class Container extends EventEmitter {
         this.path = path;
         this.port = port;
 
-        /** @type {"stopped"|"starting"|"started"|"stopping"} */
-        this.state = "stopped";
-        this.players = [];
-        /** @type {import("raraph84-lib/src/WebSocketClient")} */
-        this.gatewayClient = null;
-
         this._bindDockerEventHandler = this._dockerEventHandler.bind(this);
     }
 
-    /**
-     * @param {"stopped"|"starting"|"started"|"stopping"} state
-     */
-    _setState(state) {
+    _setState(state: "stopped" | "starting" | "started" | "stopping") {
         this.state = state;
         this.emit(state);
         this.servers.saveState();
         this.servers.gateway.clients
-            .filter((client) => client.infos.logged)
+            .filter((client) => client.metadata.logged)
             .forEach((client) => client.emitEvent("SERVER_STATE", { name: this.name, state: state }));
     }
 
-    /**
-     * @param {object} event
-     */
-    async _dockerEventHandler(event) {
+    async _dockerEventHandler(event: any) {
         if (event.Type !== "container" || event.Actor.Attributes.name !== this.name) return;
 
         if (event.Action === "start") this._postStart();
@@ -57,7 +54,7 @@ class Container extends EventEmitter {
         while (true) {
             try {
                 await this.servers.docker.getContainer(this.name).remove({ force: true });
-            } catch (error) {
+            } catch (error: any) {
                 if (error.statusCode === 404) break;
                 else if (error.statusCode === 409) continue;
                 else throw error;
@@ -65,11 +62,7 @@ class Container extends EventEmitter {
         }
     }
 
-    /**
-     * @param {number} memory
-     * @param {string} file
-     */
-    async start(memory, file) {
+    async start(memory: number, file: string) {
         await this._preStart();
 
         this.servers.dockerEvents.on("rawEvent", this._bindDockerEventHandler);
@@ -101,10 +94,7 @@ class Container extends EventEmitter {
         console.log("Container " + this.name + " started.");
     }
 
-    /**
-     * @param {string} command
-     */
-    async stop(command) {
+    async stop(command: string) {
         if (this.state !== "started") throw new Error("Not started");
         this._setState("stopping");
 
@@ -117,7 +107,7 @@ class Container extends EventEmitter {
         await new Promise((resolve) =>
             this.once("stopped", () => {
                 clearTimeout(killTimeout);
-                resolve();
+                resolve(null);
             })
         );
     }
@@ -133,25 +123,18 @@ class Container extends EventEmitter {
         if (!restart) console.log("Container " + this.name + " stopped.");
         else {
             console.log("Container " + this.name + " stopped, restarting...");
-            this.start();
+            this.start(0, "");
         }
     }
 
-    /**
-     * @param {string} content
-     */
-    async _send(content) {
+    async _send(content: string) {
         const container = this.servers.docker.getContainer(this.name);
         const stream = await container.attach({ stream: true, stdin: true });
 
         await new Promise(async (resolve, reject) => {
             stream.write(content + "\n", (error) => {
                 if (error) reject(error);
-                else
-                    stream.end((error) => {
-                        if (error) reject(error);
-                        else resolve();
-                    });
+                else stream.end(() => resolve(null));
             });
         });
     }
@@ -162,11 +145,7 @@ class Container extends EventEmitter {
         await this.servers.docker.getContainer(this.name).kill();
     }
 
-    /**
-     * @param {string} uuid
-     * @param {string} username
-     */
-    playerJoin(uuid, username) {
+    playerJoin(uuid: string, username: string) {
         if (this.players.some((player) => player.uuid === uuid)) throw new Error("This player is already connected");
         this.players.push({ uuid, username });
 
@@ -174,10 +153,7 @@ class Container extends EventEmitter {
         console.log("Player " + username + " connected to " + this.name + ".");
     }
 
-    /**
-     * @param {string} uuid
-     */
-    playerQuit(uuid) {
+    playerQuit(uuid: string) {
         const player = this.players.find((player) => player.uuid === uuid);
 
         if (!player) throw new Error("This player is already disconnected");
@@ -187,15 +163,12 @@ class Container extends EventEmitter {
         console.log("Player " + player.username + " disconnected from " + this.name + ".");
     }
 
-    /**
-     * @param {import("raraph84-lib/src/WebSocketClient")} client
-     */
-    gatewayConnected(client) {
+    gatewayConnected(client: WebSocketClient) {
         if (this.gatewayClient) this.gatewayClient.close("Another client is already connected");
         this.gatewayClient = client;
         this.emit("gatewayConnected");
         this.servers.gateway.clients
-            .filter((client) => client.infos.logged)
+            .filter((client) => client.metadata.logged)
             .forEach((client) => client.emitEvent("SERVER_GATEWAY_CONNECTED", { name: this.name }));
         console.log("Container " + this.name + " connected to the gateway.");
     }
@@ -206,15 +179,12 @@ class Container extends EventEmitter {
         this.gatewayClient = null;
         this.emit("gatewayDisconnected");
         this.servers.gateway.clients
-            .filter((client) => client.infos.logged)
+            .filter((client) => client.metadata.logged)
             .forEach((client) => client.emitEvent("SERVER_GATEWAY_DISCONNECTED", { name: this.name }));
         console.log("Container " + this.name + " disconnected from the gateway.");
     }
 
-    /**
-     * @param {boolean} logged
-     */
-    toApiObj(logged) {
+    toApiObj(logged: boolean) {
         return logged
             ? {
                   name: this.name,
@@ -232,11 +202,8 @@ class Container extends EventEmitter {
     }
 }
 
-class Proxy extends Container {
-    /**
-     * @param {import("./Servers")} servers
-     */
-    constructor(servers) {
+export class Proxy extends Container {
+    constructor(servers: Servers) {
         super(servers, "proxy", path.resolve(config.proxyDir), config.proxyPort);
     }
 
@@ -249,19 +216,24 @@ class Proxy extends Container {
     }
 }
 
-class Server extends EventEmitter {
-    /**
-     * @param {import("./Servers")} servers
-     * @param {string} name
-     * @param {import("./Node")} node
-     * @param {number} maxPlayers
-     * @param {number|null} port
-     */
-    constructor(servers, name, node, maxPlayers, port = null) {
+export class Server extends EventEmitter {
+    servers;
+    name;
+    node;
+    maxPlayers;
+    port;
+
+    state: "stopped" | "starting" | "started" | "stopping" = "stopped";
+    gatewayClient: WebSocketClient | null = null;
+
+    players: Player[] = [];
+    connectingPlayers: string[] = [];
+
+    constructor(servers: Servers, name: string, node: Node, maxPlayers: number, port: number | null = null) {
         super();
 
         if (!port) {
-            port = config.serversStartingPort;
+            port = config.serversStartingPort as number;
             while (servers.servers.some((server) => server.port === port)) port++;
         }
 
@@ -270,32 +242,21 @@ class Server extends EventEmitter {
         this.node = node;
         this.maxPlayers = maxPlayers;
         this.port = port;
-
-        /** @type {"stopped"|"starting"|"started"|"stopping"} */
-        this.state = "stopped";
-        /** @type {import("raraph84-lib/src/WebSocketClient")} */
-        this.gatewayClient = null;
-
-        this.players = [];
-        this.connectingPlayers = [];
     }
 
-    /**
-     * @param {"stopped"|"starting"|"started"|"stopping"} state
-     */
-    setState(state) {
+    setState(state: "stopped" | "starting" | "started" | "stopping") {
         this.state = state;
         this.emit(state);
         this.servers.saveState();
         this.servers.gateway.clients
-            .filter((client) => client.infos.logged)
+            .filter((client) => client.metadata.logged)
             .forEach((client) => client.emitEvent("SERVER_STATE", { name: this.name, state: state }));
     }
 
-    playerConnecting(uuid) {
+    playerConnecting(uuid: string) {
         this.connectingPlayers.push(uuid);
 
-        const listener = (player) => {
+        const listener = (player: Player) => {
             if (player.uuid !== uuid) return;
             this.off("playerJoin", listener);
             clearTimeout(timeout);
@@ -310,11 +271,7 @@ class Server extends EventEmitter {
         this.on("playerJoin", listener);
     }
 
-    /**
-     * @param {string} uuid
-     * @param {string} username
-     */
-    playerJoin(uuid, username) {
+    playerJoin(uuid: string, username: string) {
         if (this.players.some((player) => player.uuid === uuid)) throw new Error("This player is already connected");
         this.players.push({ uuid, username });
 
@@ -322,10 +279,7 @@ class Server extends EventEmitter {
         console.log("Player " + username + " connected to " + this.name + ".");
     }
 
-    /**
-     * @param {string} uuid
-     */
-    playerQuit(uuid) {
+    playerQuit(uuid: string) {
         const player = this.players.find((player) => player.uuid === uuid);
 
         if (!player) throw new Error("This player is already disconnected");
@@ -335,15 +289,12 @@ class Server extends EventEmitter {
         console.log("Player " + player.username + " disconnected from " + this.name + ".");
     }
 
-    /**
-     * @param {import("raraph84-lib/src/WebSocketClient")} client
-     */
-    gatewayConnected(client) {
+    gatewayConnected(client: WebSocketClient) {
         if (this.gatewayClient) this.gatewayClient.close("Another client is already connected");
         this.gatewayClient = client;
         this.emit("gatewayConnected");
         this.servers.gateway.clients
-            .filter((client) => client.infos.logged)
+            .filter((client) => client.metadata.logged)
             .forEach((client) => client.emitEvent("SERVER_GATEWAY_CONNECTED", { name: this.name }));
         console.log("Container " + this.name + " connected to the gateway.");
     }
@@ -354,15 +305,12 @@ class Server extends EventEmitter {
         this.gatewayClient = null;
         this.emit("gatewayDisconnected");
         this.servers.gateway.clients
-            .filter((client) => client.infos.logged)
+            .filter((client) => client.metadata.logged)
             .forEach((client) => client.emitEvent("SERVER_GATEWAY_DISCONNECTED", { name: this.name }));
         console.log("Container " + this.name + " disconnected from the gateway.");
     }
 
-    /**
-     * @param {boolean} logged
-     */
-    toApiObj(logged) {
+    toApiObj(logged: boolean) {
         return logged
             ? {
                   name: this.name,
@@ -384,34 +332,24 @@ class Server extends EventEmitter {
     }
 }
 
-class Lobby extends Server {
-    /**
-     * @param {import("./Servers")} servers
-     * @param {number} id
-     * @param {import("./Node")} node
-     * @param {number|null} port
-     */
-    constructor(servers, id, node, port = null) {
+export class Lobby extends Server {
+    id: number;
+
+    constructor(servers: Servers, id: number, node: Node, port: number | null = null) {
         super(servers, "lobby" + id, node, config.lobbyMaxPlayers, port);
         this.id = id;
     }
 
-    /**
-     * @param {boolean} logged
-     */
-    toApiObj(logged) {
+    toApiObj(logged: boolean) {
         return { type: "lobby", id: this.id, ...super.toApiObj(logged) };
     }
 }
 
-class Game extends Server {
-    /**
-     * @param {import("./Servers")} servers
-     * @param {number} id
-     * @param {import("./Node")} node
-     * @param {number|null} port
-     */
-    constructor(servers, id, node, port = null) {
+export class Game extends Server {
+    id: number;
+    gameStarted: boolean;
+
+    constructor(servers: Servers, id: number, node: Node, port: number | null = null) {
         super(servers, "game" + id, node, config.gamePlayers, port);
 
         this.id = id;
@@ -430,12 +368,9 @@ class Game extends Server {
         });
     }
 
-    /**
-     * @param {boolean} logged
-     */
-    toApiObj(logged) {
+    toApiObj(logged: boolean) {
         return { type: "game", id: this.id, ...super.toApiObj(logged), gameStarted: this.gameStarted };
     }
 }
 
-module.exports = { Container, Proxy, Server, Lobby, Game };
+type Player = { uuid: string; username: string };

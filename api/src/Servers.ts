@@ -1,46 +1,47 @@
-const { Proxy, Lobby, Game, Server } = require("./Containers");
-const { promises: fs, existsSync } = require("fs");
-const path = require("path");
-const config = require("../config.json");
+import { promises as fs, existsSync } from "fs";
+import { WebSocketServer } from "raraph84-lib";
+import { Game, Lobby, Proxy, Server } from "./Containers";
+import Dockerode from "dockerode";
+import DockerEventListener from "./DockerEventListener";
+import Node from "./Node";
+import path from "path";
 
+const config = require("../config.json");
 const stateFile = path.resolve(config.stateFile);
 
-class Servers {
-    /**
-     * @param {import("dockerode")} docker
-     * @param {import("./DockerEventListener")} dockerEvents
-     * @param {import("raraph84-lib/src/WebSocketServer")} gateway
-     * @param {import("./Node")[]} nodes
-     */
-    constructor(docker, dockerEvents, gateway, nodes) {
+export default class Servers {
+    docker;
+    dockerEvents;
+    gateway;
+    nodes;
+
+    proxy;
+    servers: Server[] = [];
+
+    scalingLobbies = false;
+    scalingGames = false;
+
+    savingState = false;
+    needSaveState = false;
+
+    constructor(docker: Dockerode, dockerEvents: DockerEventListener, gateway: WebSocketServer, nodes: Node[]) {
         this.docker = docker;
         this.dockerEvents = dockerEvents;
         this.gateway = gateway;
         this.nodes = nodes;
 
         this.proxy = new Proxy(this);
-        /** @type {import("./Containers").Server[]} */
-        this.servers = [];
-
-        this.scalingLobbies = false;
-        this.scalingGames = false;
-
-        this.savingState = false;
-        this.needSaveState = false;
     }
 
-    /**
-     * @param {Server} server
-     */
-    async _startServer(server) {
+    async _startServer(server: Server) {
         this.servers.push(server);
         this.saveState();
 
-        server.node.gatewayClient.emitEvent("SERVER_ACTION", { action: "create", ...server.toApiObj(true) });
+        server.node.gatewayClient!.emitEvent("SERVER_ACTION", { action: "create", ...server.toApiObj(true) });
         await new Promise((resolve) => server.once("actionCreated", resolve));
 
         this.gateway.clients
-            .filter((client) => client.infos.logged)
+            .filter((client) => client.metadata.logged)
             .forEach((client) => client.emitEvent("SERVER_CREATED", server.toApiObj(true)));
     }
 
@@ -48,7 +49,7 @@ class Servers {
         while (!this.nodes.some((node) => node.gatewayClient))
             await new Promise((resolve) => setTimeout(resolve, 1000));
 
-        const scount = (node) => this.servers.filter((server) => server.node === node).length;
+        const scount = (node: Node) => this.servers.filter((server) => server.node === node).length;
         const availableNodes = this.nodes.filter((node) => node.gatewayClient);
 
         availableNodes.sort((a, b) => scount(a) / a.maxMemory - scount(b) / b.maxMemory);
@@ -68,11 +69,8 @@ class Servers {
         return server;
     }
 
-    /**
-     * @param {string} playerUuid
-     */
-    getAvailableLobby(playerUuid) {
-        const pcount = (server) => server.players.length + server.connectingPlayers.length;
+    getAvailableLobby(playerUuid: string) {
+        const pcount = (server: Server) => server.players.length + server.connectingPlayers.length;
         const availableLobbies = this.servers.filter((server) => server instanceof Lobby && server.gatewayClient);
 
         let availableLobby = availableLobbies.find((server) => pcount(server) < config.lobbyPlayers);
@@ -97,10 +95,7 @@ class Servers {
         return server;
     }
 
-    /**
-     * @param {string} playerUuid
-     */
-    getAvailableGame(playerUuid) {
+    getAvailableGame(playerUuid: string) {
         const availableGames = this.servers.filter(
             (server) => server instanceof Game && server.gatewayClient && !server.gameStarted
         );
@@ -114,18 +109,15 @@ class Servers {
         return availableGame || null;
     }
 
-    /**
-     * @param {import("./Containers").Server} server
-     */
-    async removeServer(server) {
-        server.node.gatewayClient.emitEvent("SERVER_ACTION", { action: "remove", ...server.toApiObj(true) });
+    async removeServer(server: Server) {
+        server.node.gatewayClient!.emitEvent("SERVER_ACTION", { action: "remove", ...server.toApiObj(true) });
         await new Promise((resolve) => server.once("actionRemoved", resolve));
 
         this.servers = this.servers.filter((s) => s !== server);
         this.saveState();
 
         this.gateway.clients
-            .filter((client) => client.infos.logged)
+            .filter((client) => client.metadata.logged)
             .forEach((client) => client.emitEvent("SERVER_REMOVED", { name: server.name }));
     }
 
@@ -199,7 +191,7 @@ class Servers {
             await new Promise((resolve) => server.once("actionCreated", resolve));
 
             this.gateway.clients
-                .filter((client) => client.infos.logged)
+                .filter((client) => client.metadata.logged)
                 .forEach((client) => client.emitEvent("SERVER_RESTORED", server.toApiObj(true)));
         }
 
@@ -323,5 +315,3 @@ class Servers {
         this.scalingGames = false;
     }
 }
-
-module.exports = Servers;

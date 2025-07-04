@@ -1,19 +1,19 @@
-const Ws = require("ws");
+import { WebSocket } from "ws";
+import Servers from "./Servers";
+
 const config = require("../config.json");
 
-/** @type {import("ws")} */
-let lastWs = null;
-module.exports.getLastWs = () => lastWs;
+type Ws = WebSocket & { sendCommand: (command: string, message?: object) => void };
 
-/**
- * @param {import("./Servers")} servers
- */
-module.exports.init = async (servers) => {
+let lastWs: Ws | null = null;
+const getLastWs = () => lastWs;
+
+const init = async (servers: Servers) => {
     let lastHeartbeat = -1;
     let connected = false;
 
     const connect = () => {
-        const ws = new Ws("ws://" + config.apiHost + "/gateway", { handshakeTimeout: 5000 });
+        const ws = new WebSocket("ws://" + config.apiHost + "/gateway", { handshakeTimeout: 5000 }) as Ws;
         ws.sendCommand = (command, message = {}) => {
             //console.log("->", { command, ...message });
             ws.send(JSON.stringify({ command, ...message }));
@@ -42,7 +42,7 @@ module.exports.init = async (servers) => {
         ws.on("message", (data) => {
             let message;
             try {
-                message = JSON.parse(data);
+                message = JSON.parse(data.toString());
             } catch (error) {
                 return;
             }
@@ -64,7 +64,7 @@ module.exports.init = async (servers) => {
                     if (message.type === "lobby") servers.startLobbyServer(message.id, message.port);
                     else if (message.type === "game") servers.startGameServer(message.id, message.port);
                 } else if (message.action === "remove") {
-                    const server = servers.servers.find((s) => s.name === message.name);
+                    const server = servers.servers.find((s) => s.name === message.name)!;
                     servers.removeServer(server);
                 }
             }
@@ -72,9 +72,11 @@ module.exports.init = async (servers) => {
     };
 
     setInterval(() => {
-        if (lastHeartbeat >= 0 && Date.now() - lastHeartbeat > (30 + 10) * 1000) lastWs.terminate();
+        if (lastHeartbeat >= 0 && Date.now() - lastHeartbeat > (30 + 10) * 1000) lastWs!.terminate();
     }, 5000);
 
     console.log("Connecting to the gateway...");
     connect();
 };
+
+export default { init, getLastWs };

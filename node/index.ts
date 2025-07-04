@@ -1,9 +1,10 @@
-import { existsSync, promises as fs } from "fs";
+import { promises as fs, existsSync } from "fs";
 import Dockerode from "dockerode";
+import DockerEventListener from "./src/DockerEventListener";
+import Servers from "./src/Servers";
 import path from "path";
+import gateway from "./src/gateway";
 
-const DockerEventListener = require("./src/DockerEventListener");
-const Servers = require("./src/Servers");
 const config = require("./config.json");
 
 require("dotenv").config();
@@ -37,5 +38,5 @@ require("dotenv").config();
 
     const servers = new Servers(docker, dockerEvents);
 
-    require("./src/gateway").init(servers);
+    gateway.init(servers);
 })();
