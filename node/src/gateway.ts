@@ -60,13 +60,9 @@ const init = async (servers: Servers) => {
                 lastHeartbeat = Date.now();
                 ws.sendCommand("HEARTBEAT");
             } else if (event === "SERVER_ACTION") {
-                if (message.action === "create") {
-                    if (message.type === "lobby") servers.startLobbyServer(message.id, message.port);
-                    else if (message.type === "game") servers.startGameServer(message.id, message.port);
-                } else if (message.action === "remove") {
-                    const server = servers.servers.find((s) => s.name === message.name)!;
-                    servers.removeServer(server);
-                }
+                if (message.action === "create") servers.startServer(message.name, message.port, message.config);
+                else if (message.action === "remove")
+                    servers.removeServer(servers.servers.find((s) => s.name === message.name)!);
             }
         });
     };

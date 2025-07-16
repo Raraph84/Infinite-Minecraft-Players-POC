@@ -1,4 +1,4 @@
-import { Game, Lobby, Proxy, Server } from "./Containers";
+import { Proxy, Server, ServerConfig } from "./Containers";
 import Dockerode from "dockerode";
 import DockerEventListener from "./DockerEventListener";
 import gateway from "./gateway";
@@ -16,7 +16,9 @@ export default class Servers {
         this.proxy = new Proxy(this);
     }
 
-    async startServer(server: Server) {
+    async startServer(name: string, port: number, config: ServerConfig) {
+        const server = new Server(this, name, port, config);
+
         this.servers.push(server);
 
         gateway.getLastWs()!.sendCommand("SERVER_ACTION", { name: server.name, action: "created" });
@@ -26,18 +28,6 @@ export default class Servers {
             this.dockerEvents.on("rawEvent", server._bindDockerEventHandler);
             server._setState("started");
         } else await server.start();
-    }
-
-    async startLobbyServer(id: number, port: number) {
-        const server = new Lobby(this, id, port);
-        await this.startServer(server);
-        return server;
-    }
-
-    async startGameServer(id: number, port: number) {
-        const server = new Game(this, id, port);
-        await this.startServer(server);
-        return server;
     }
 
     async removeServer(server: Server) {

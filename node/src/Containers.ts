@@ -11,18 +11,28 @@ export abstract class Container extends EventEmitter {
     name;
     path;
     port;
+    serverConfig;
+    stopCommand;
 
     state: "stopped" | "starting" | "started" | "stopping" = "stopped";
-
     _bindDockerEventHandler;
 
-    constructor(servers: Servers, name: string, path: string, port: number) {
+    constructor(
+        servers: Servers,
+        name: string,
+        path: string,
+        port: number,
+        serverConfig: ServerConfig,
+        stopCommand: string
+    ) {
         super();
 
         this.servers = servers;
         this.name = name;
         this.path = path;
         this.port = port;
+        this.serverConfig = serverConfig;
+        this.stopCommand = stopCommand;
 
         this._bindDockerEventHandler = this._dockerEventHandler.bind(this);
     }
@@ -56,8 +66,7 @@ export abstract class Container extends EventEmitter {
         }
     }
 
-    async start(...args: any[]) {
-        const [memory, file, java] = args as [number, string, number];
+    async start() {
         await this._preStart();
 
         this.servers.dockerEvents.on("rawEvent", this._bindDockerEventHandler);
@@ -67,8 +76,8 @@ export abstract class Container extends EventEmitter {
             ExposedPorts: { "25565/tcp": {} },
             Tty: true,
             OpenStdin: true,
-            Cmd: ["java", "-Xmx" + memory * 1024 + "M", "-jar", file],
-            Image: "openjdk:" + java,
+            Cmd: ["java", "-Xmx" + this.serverConfig.memory * 1024 + "M", "-jar", this.serverConfig.jar],
+            Image: "openjdk:" + this.serverConfig.java,
             WorkingDir: "/home/server",
             HostConfig: {
                 PortBindings: {
@@ -89,14 +98,13 @@ export abstract class Container extends EventEmitter {
         console.log("Container " + this.name + " started.");
     }
 
-    async stop(...args: any[]) {
-        const [command] = args as [string];
+    async stop() {
         if (this.state !== "started") throw new Error("Not started");
         this._setState("stopping");
 
         console.log("Stopping container " + this.name + "...");
 
-        await this._send(command);
+        await this._send(this.stopCommand);
 
         const killTimeout = setTimeout(() => this.kill(), 30 * 1000);
 
@@ -144,7 +152,14 @@ export abstract class Container extends EventEmitter {
 
 export class Proxy extends Container {
     constructor(servers: Servers) {
-        super(servers, "proxy-" + config.nodeName, path.resolve(config.proxyDir), config.proxyPort);
+        super(
+            servers,
+            "proxy-" + config.nodeName,
+            path.resolve(config.proxyDir),
+            config.proxyPort,
+            config.proxyConfig,
+            "end"
+        );
     }
 
     _setState(state: "stopped" | "starting" | "started" | "stopping"): void {
@@ -171,19 +186,11 @@ export class Proxy extends Container {
             })
         );
     }
-
-    async start() {
-        await super.start(config.proxyMemory, "velocity.jar", 21);
-    }
-
-    async stop() {
-        await super.stop("end");
-    }
 }
 
-export abstract class Server extends Container {
-    constructor(servers: Servers, name: string, port: number) {
-        super(servers, name, path.join(path.resolve(config.serversDir), name), port);
+export class Server extends Container {
+    constructor(servers: Servers, name: string, port: number, serverConfig: ServerConfig) {
+        super(servers, name, path.join(path.resolve(config.serversDir), name), port, serverConfig, "stop");
     }
 
     _setState(state: "stopped" | "starting" | "started" | "stopping"): void {
@@ -191,13 +198,11 @@ export abstract class Server extends Container {
         gateway.getLastWs()!.sendCommand("SERVER_STATE", { name: this.name, state: state });
     }
 
-    async _preStart(...args: any[]) {
-        const [templateDir] = args as [string];
-
+    async _preStart() {
         await super._preStart();
 
         if (existsSync(this.path)) await fs.rm(this.path, { recursive: true });
-        await fs.cp(path.resolve(templateDir), this.path, { recursive: true });
+        await fs.cp(path.resolve(this.serverConfig.templateDir!), this.path, { recursive: true });
 
         const configFile = path.join(
             this.path,
@@ -211,47 +216,11 @@ export abstract class Server extends Container {
             `servername: ${this.name}\napikey: ${process.env.API_KEY}\napihost: ${config.apiHost}`
         );
     }
-
-    async start(...args: any[]) {
-        const [memory] = args as [number];
-        await super.start(memory, "spigot.jar", 8);
-    }
-
-    async stop() {
-        await super.stop("stop");
-    }
 }
 
-export class Lobby extends Server {
-    id;
-
-    constructor(servers: Servers, id: number, port: number) {
-        super(servers, "lobby" + id, port);
-        this.id = id;
-    }
-
-    async _preStart() {
-        await super._preStart(config.lobbyServerTemplateDir);
-    }
-
-    async start() {
-        await super.start(config.lobbyServerMemory);
-    }
-}
-
-export class Game extends Server {
-    id;
-
-    constructor(servers: Servers, id: number, port: number) {
-        super(servers, "game" + id, port);
-        this.id = id;
-    }
-
-    async _preStart() {
-        await super._preStart(config.gameServerTemplateDir);
-    }
-
-    async start() {
-        await super.start(config.gameServerMemory);
-    }
-}
+export type ServerConfig = {
+    memory: number;
+    java: number;
+    jar: string;
+    templateDir?: string;
+};
