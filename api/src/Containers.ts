@@ -160,7 +160,7 @@ export class Lobby extends Server {
     }
 
     toApiObj(logged: boolean) {
-        return { type: "lobby", id: this.id, ...super.toApiObj(logged) };
+        return { type: "lobby", id: this.id, config: config.lobbyServerConfig, ...super.toApiObj(logged) };
     }
 }
 
@@ -188,7 +188,13 @@ export class Game extends Server {
     }
 
     toApiObj(logged: boolean) {
-        return { type: "game", id: this.id, ...super.toApiObj(logged), gameStarted: this.gameStarted };
+        return {
+            type: "game",
+            id: this.id,
+            config: config.gameServerConfig,
+            ...super.toApiObj(logged),
+            gameStarted: this.gameStarted
+        };
     }
 }
 

@@ -2,12 +2,22 @@
     "port": 8080,
     "serversStartingPort": 25000,
     "lobbyServersScalingInterval": 5000,
-    "lobbyServerMemory": 4,
     "lobbyPlayers": 60,
     "lobbyMaxPlayers": 120,
+    "lobbyServerConfig": {
+        "memory": 4,
+        "java": 8,
+        "jar": "spigot.jar",
+        "templateDir": "../server-template"
+    },
     "gameServersScalingInterval": 0,
-    "gameServerMemory": 1,
     "gamePlayers": 16,
+    "gameServerConfig": {
+        "memory": 1,
+        "java": 8,
+        "jar": "spigot.jar",
+        "templateDir": "../server-template"
+    },
     "nodes": [
         {
             "name": "node01",

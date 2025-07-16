@@ -13,9 +13,7 @@
   "license": "MIT",
   "description": "",
   "dependencies": {
-    "@types/dockerode": "^3.3.39",
     "@types/node": "^22.15.21",
-    "dockerode": "^4.0.6",
     "dotenv": "^16.5.0",
     "raraph84-lib": "^2.21.0",
     "typescript": "^5.8.3"

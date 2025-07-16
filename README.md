@@ -54,7 +54,6 @@ Open a terminal and run
 docker run -it --init \
 --name api \
 --volume ~/infinite-minecraft-players-poc:$HOME/infinite-minecraft-players-poc \
---volume /var/run/docker.sock:/var/run/docker.sock \
 --workdir $HOME/infinite-minecraft-players-poc/api \
 --publish 8080:8080 \
 node npm start
